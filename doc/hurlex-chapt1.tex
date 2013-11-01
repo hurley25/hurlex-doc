@@ -1,0 +1,266 @@
+% -*- coding: UTF-8 -*-
+% hurlex-chapt1.tex
+% hurlex 开发文档 第1章内容
+
+\section{项目概述和开发环境配置}
+
+\par 这是一篇阐述如何在基于Intel x86架构的IBM PC机及其兼容计算机上构建一个简单的操作系统内核的教程。\allowbreak
+\footnote{这篇教程很大程度上来自《JamesM's kernel development tutorials》这篇文档，感谢原作者的辛勤劳动。\allowbreak
+相较而言笔者的工作在很大的程度上只是转述和查证。}
+笔者将和你一起探索x86CPU的保护模式下操作系统内核的编写方法，一起感受一次完整的探索过程。\allowbreak
+虽然我们所做的小内核和一个具有商业价值的操作系统内核相较而言依旧相差甚远。但是通过这样的探索，我相信我们能充\allowbreak
+分的理解x86保护模式的运行方式和操作系统的基本原理，而这恰恰是传统的通过阅读书籍的方式难以获得的深刻体验。
+
+\par 言归正传，开始我们的征程吧。什么？你已经迫不及待的打开编辑器准备写代码了？别着急，工欲善其事，必先利其器。\allowbreak
+我们先来阐述我们的开发环境和相关的工具配置。
+
+\subsection{选择工作环境}
+\par Windows 和 Linux 之争由来已久，笔者不想在这篇文档里针对这个问题再非口舌。我们的工作环境也选择Linux，\allowbreak
+对于Windows用户而言只能说声抱歉了。我们使用Linux的原因很简单，这里有可以自由使用的一系列的开源\allowbreak
+软件能很好的协助我们的开发和调试工作，而在Windows下缺乏相应的免费工具\allowbreak
+\footnote {当然也可能是笔者学习和工作的环境多是Linux，所以对Windows下的工具所知甚少。另外为了避免读者频繁看到诸如\allowbreak
+"Windows下如何做，Linux下如何做"的字眼而厌烦，所以我们就只能牺牲一部分读者的感受了，笔者在此表示歉意。}
+。虽然笔者使用的是Fedora 18，但是这不影响读者们对于Linux发行版的选择，我们使用的命令大都是很类似的。\allowbreak
+\footnote {差异较大的部分应该是软件安装的包管理器了，这个相信读者们应该很熟悉自己所使用的发行版所附带的包管理器了。}
+
+\par 同时，为了避免谈及一些Linux基础的命令和基本的计算机概念，我们假定读者已经对以下列出的知识点有一定的理解和掌握：
+\begin{itemize}
+	\item 熟悉微机原理和基本的操作系统原理，了解基本的计算机原理概念。
+	\item 了解和熟悉Intel x86保护模式下的一些名词和概念，至少需要熟悉Intel 8086.
+	\item 熟悉和掌握Linux的常用命令，能在Linux下进行基本的系统程序编写。
+	\item 掌握简单的x86汇编语言，能读懂和编写简单的汇编程序（至少能看懂）。
+	\item 熟练掌握C语言程序的编写，对C语言中较为复杂的语法有所了解。
+	\item 理解和掌握C语言程序编译的过程，了解链接的基本原理。
+	\item ……
+\end{itemize}
+
+\par 我希望我之前的描述没有吓到你。也许你本来满怀热情的准备开始干一场"大事业"的热情被一盆水浇凉了很多。假如你没有，\allowbreak
+那么我很高兴。即使你真的被那些条款吓到了也不要紧，学习本来就是一个从无到有的过程，操作系统内核的编写本来就是一个\allowbreak
+及其复杂和麻烦的过程。尽管我们做的东西甚至只是一个基本原理的演示，但那也是实打实的可以运行在裸机\allowbreak
+\footnote{这里的"裸机"指没有安装操作系统的计算机。}
+上的小内核。不过千里之行，始于足下。一时的胆怯会在我们逐渐获得的一点点成就感中丧失殆尽。同时笔者也会尽量降低这个小内核的\allowbreak
+难度，给充满热情但相关基础较为薄弱的读者阐述尽可能多的背景资料和原理解析（至少也会给出参考资料的链接）。笔者相信哪怕\allowbreak
+你之前的基础再弱，至少也能"照猫画虎"的构建出一个可以在裸机上运行的小内核。
+\par 相信这个体验会对你以后的学习生涯带来很多难以估量的\allowbreak
+好处。当你在学习计算机原理的时候，你对计算机的理解将不再是浅浅的浮于表面的概括，而是深刻的掌握了机器运行的基本原理。\allowbreak
+那些看似枯燥的理论和概念在你的眼里将是鲜活且富有生机的。相比较一般的用户只是使用计算机而言，我们却在自己的机器上写出\allowbreak
+了一个可以运行的操作系统内核。这难道不是一件很酷、很Geek、很好玩的事情吗？
+
+\subsection{选择开发语言}
+\par 我们解决了工作环境的问题，接下来是语言的选择了。如果我说是汇编语言的话，恐怕很多读者已经彻底失去了读下去的勇气了。\allowbreak
+但是没有办法，有的地方我们确实需要使用汇编语言去实现。但是聪明的读者已经注意到前面笔者提到了C语言，没错，很大程度\allowbreak
+上的代码使用C语言来实现。所以不用过于担心，我们的项目不会太难的。
+
+\subsection{选择开发工具}
+\par 接着是选择开发使用的工具了，这个我简单的列出来吧。首先C语言的编译器肯定使用gcc，链接器自然也就是ld了。同时大项目\allowbreak
+自然也少不了GNU make这个构建工具了。至于汇编编译器我们选择nasm这个开源免费的编译器，以便使用大多数读者习惯的Intel\allowbreak
+风格的汇编语法。不过考虑到我们需要在一些C语言代码中内联汇编指令，而gcc使用的是AT\&T风格的汇编语法，所以大家还是需要\allowbreak
+掌握一部分的AT\&T风格的语法的。不过这个倒不必担心，随意Google一下就有好多的资料可以学习。这些就是我们开发使用的多数\allowbreak
+工具了，其他的工具我会在使用的时候再介绍。
+
+\par 现在看起来一切都还好不是吗？等等，我们写用户级别程序自然可以直接运行，可我们现在是要写一个操作系统内核啊。\allowbreak
+我们在哪里运行它？难道我们再需要一台计算机吗？当然不用了，我们可以使用虚拟机。如果你使用过相关的虚拟机软件，比如Vmware\allowbreak
+或者Virtual Box之类的话那就太好了。当然没用过也不必担心，其实虚拟机就是一个软件。它可以在宿主机上\allowbreak
+\footnote{我们把运行这个虚拟机软件的机器叫做宿主机}模拟出一个虚拟的硬件环境再次运行一个操作系统，而且运行的操作系统\allowbreak
+重启和关机都是虚拟的，不需要重启宿主机。而且虚拟机里运行的程序不会对我们的宿主机造成影响\allowbreak
+\footnote{至少笔者还从来没见过可以穿透虚拟机而损坏到宿主机的程序，而且以笔者的水平肯定写不出来，大家尽管放心。:) }
+，所以我们可以放心的编写代码而不必担心对自己的机器造成损坏。
+\par 不过我们这次使用的不是大多数读者熟悉的Vmware或者Virtual Box，而是一款叫做qemu\allowbreak
+的虚拟机。为什么呢？因为我们有调试的需要。我们需要一个能调试其上运行着的操作系统的虚拟机，而qemu是个不错的选择。\allowbreak
+也许你听过另一款叫做bochs的虚拟机也支持调试，但我们这次不选择bochs。因为各大Linux发行版软件源里的bochs默认是不带有\allowbreak
+功能的，我们需要重新下载源码编译。而从源里安装的qemu通常直接可以和gdb进行联合调试，所以很省事。而且大家作为一个linuxer，\allowbreak
+对gdb的使用也不需要我多费唇舌吧？我们本着易用简单的理念开始这篇文档，倘若在环境配置上就让读者感到无所适从的话就不好了。\allowbreak
+如果你熟悉bochs，那自然也可以使用，我会在本章节的末尾给出一个bochs的配置以供有需要的读者参考。
+
+qemu 的安装方法很简单，以笔者的Fedora为例，只需执行以下命令即可。
+\begin{Verbatim}[frame=single]
+    sudo yum install qemu -y
+\end{Verbatim}
+
+\par 不过安装完成后我们需要建立一个符号链接文件，命令如下：
+
+\begin{Verbatim}[frame=single]
+    sudo ln -s /usr/bin/qemu-system-i386 /usr/bin/qemu
+\end{Verbatim}
+
+\par 大家可以根据自己实际的软件安装目录去配置。
+
+\subsection{开发中用到的脚本文件}
+
+\subsubsection{Makefile}
+\par 首先是我们编译时使用的Makefile。笔者要透露的是，这个Makefile在我们整个项目的进程中\allowbreak
+几乎不会被修改。所以学会它就等于学会了我们整个内核项目的编译方式，很划算哦。
+\footnote{可能有的地方你不是很理解，那么你可以试着去Google上搜索你不理解的关键字，\allowbreak
+也可以参考Makefile或者gcc的手册，这些在网上都很容易检索到。}
+\footnote{这个Makefile很简单而且颇具启发意义。只要简单修改一些参数就可以在其他项目里使用了。}
+
+\begin{lstlisting}[language = sh, label = Makefile, caption = Makefile]
+#!Makefile
+
+C_SOURCES = $(shell find . -name "*.c")
+C_OBJECTS = $(patsubst %.c, %.o, $(C_SOURCES))
+S_SOURCES = $(shell find . -name "*.s")
+S_OBJECTS = $(patsubst %.s, %.o, $(S_SOURCES))
+
+CC = gcc
+LD = ld
+ASM = nasm
+
+C_FLAGS = -c -Wall -m32 -ggdb -gstabs+ -nostdinc -fno-builtin -fno-stack-protector -I include
+LD_FLAGS = -T tools/kernel.ld -m elf_i386 -nostblib
+ASM_FLAGS = -f elf -g
+
+all: $(S_OBJECTS) $(C_OBJECTS) link update_image
+
+.c.o:
+	@echo 编译代码文件 $< ...
+	$(CC) $(C_FLAGS) $< -o $@
+
+.s.o:
+	@echo 编译汇编文件 $< ...
+	$(ASM) $(ASM_FLAGS) $<
+
+link:
+	@echo 链接内核文件...
+	$(LD) $(LD_FLAGS) $(S_OBJECTS) $(C_OBJECTS) -o hx_kernel
+
+.PHONY:clean
+clean:
+	$(RM) $(S_OBJECTS) $(C_OBJECTS) hx_kernel
+
+.PHONY:update_image
+update_image:
+	sudo mount floppy.img /mnt/kernel
+	sudo cp hx_kernel /mnt/kernel/hx_kernel
+	sleep 1
+	sudo umount /mnt/kernel
+
+.PHONY:mount_image
+mount_image:
+	sudo mount floppy.img /mnt/kernel
+
+.PHONY:umount_image
+umount_image:
+	sudo umount /mnt/kernel
+
+.PHONY:qemu
+qemu:
+	qemu -fda floppy.img -boot a
+
+.PHONY:bochs
+bochs:
+	bochs -f tools/bochsrc.txt
+
+.PHONY:debug
+debug:
+	qemu -S -s -fda floppy.img -boot a &
+	sleep 1
+	cgdb -x tools/gdbinit
+
+\end{lstlisting} 
+
+\subsubsection{kernel.ld}
+\par 接下来是我们初步采用的链接器脚本的定义。
+
+\begin{lstlisting}[label = script/kernel.ld, caption = script/kernel.ld]
+/*
+ *      kernel.ld -- 针对 kernel 格式所写的链接脚本
+ */
+
+ENTRY(start)
+SECTIONS
+{
+	/* 代码段起始位置 */
+	.text 0x100000 :
+	{
+		code = .; _code = .; __code = .;
+		*(.text)
+		. = ALIGN(4096);
+	}
+
+	.data :
+	{
+		data = .; _data = .; __data = .;
+		*(.data)
+		*(.rodata)
+		. = ALIGN(4096);
+	}
+
+	.bss :
+	{
+		bss = .; _bss = .; __bss = .;
+		*(.bss)
+		. = ALIGN(4096);
+	}
+
+	end = .; _end = .; __end = .;
+
+	/DISCARD/ : { *(.comment) *(.eh_frame) }
+}
+\end{lstlisting}
+ 
+\par 这个脚本告诉ld程序如何构造我们的内核映像文件。
+\par 首先，我们声明了内核程序的入口地址是符号 "start" 。然后，我们声明了第一个段.text段（代码段）\allowbreak
+以及它的起始地址0x100000（1MB）。接着是已初始化数据段.data和未初始化数据段.bss以及它们采用的4096的\allowbreak
+页对齐方式。Linux GCC 增加了额外的数据段.rodata，这是一个只读的已初始化数据段，放置常量什么的。\allowbreak
+另外为了简单起见，我们把.rodata段和.data段放在了一起。
+\par 如果你对这里的ld链接器的脚本不是很理解也不是很重要，只要理解了脚本表示的意思就好。
+\footnote{如果你对编译和链接的过程所知甚少的话，笔者厚脸推荐你去笔者的博客看两篇文章。分别是\allowbreak
+《编译和链接的那些事》(上/下) 地址是：http://toqianmo.sinaapp.com/?p=323 和 \allowbreak
+http://toqianmo.sinaapp.com/?p=357}
+\footnote{如果你对进程的地址空间不是很熟悉的话，建议你先去Google上检索相关的资料，笔者的博客也有一篇讲解\allowbreak
+Linux下进程的线性地址空间的文章可以供你参考，地址是：http://toqianmo.sinaapp.com/?p=397}
+\par 我们所用到的脚本暂时就是这两个，随着项目的逐渐展开，还会有陆续的代码加进来。
+\par 笔者目前的目录结构是这样的：
+\begin{Verbatim}[frame=single]
+.
+|-- Makefile
+`-- scripts
+    `-- kernel.ld
+
+1 directory, 2 files
+\end{Verbatim}
+\par 你也可以按照这个目录来放置我们的代码，这样会比较清晰。至于项目名称，既然是我们自己写，那就由我们自己随意取名啦。
+\footnote{笔者自己写的小内核叫做hulex。大家可以给自己写的内核自由命名，做一个属于自己的操作系统内核。}
+
+\subsubsection{bochs 虚拟机的配置文件}
+\par 笔者遵守承诺，给bochs的读者提供一份bochs的配置参考。其实熟悉bochs的读者估计都比笔者写的好，根本用不到这个。
+\footnote{和笔者一起使用qemu的用户是不是很疑惑，怎么没有qemu虚拟机的配置文件呢？嘿嘿，仔细读Makefile，它已经包含\allowbreak
+在Makefile里了，也就是几个命令行参数，简单吧？}
+
+\begin{lstlisting}
+# ------------------------------------------------------------
+# Bochs 配置文件
+#
+# ------------------------------------------------------------
+
+# 开始 gdb 联合调试，这很重要
+gdbstub: enabled=1,port=1234,text_base=0,data_base=0,bss_base=0
+
+# 内存
+megs: 32
+
+# ROM 文件
+romimage: file="$BXSHARE/BIOS-bochs-latest"
+vgaromimage: file="$BXSHARE/VGABIOS-lgpl-latest"
+
+# 软盘
+floppya: 1_44=floppy.img, status=inserted
+boot: a
+
+# 启动设备为软盘
+boot: floppy
+
+# 鼠标 不启用
+mouse: enabled=0
+
+# 键盘 启用 US 键盘映射
+keyboard_mapping: enabled=1, map="$BXSHARE/keymaps/x11-pc-us.map"
+
+# CPU 配置
+clock: sync=realtime
+cpu: ips=1000000
+\end{lstlisting}
+
+\par 这里要注意的是：一般来说各大Linux发行版软件源里自带的bochs没有开启gdb的联合调试功能。这就需要我们自己下载\allowbreak
+源代码编译，具体的方式请有需要的读者自行上网检索。不过笔者还是推荐使用qemu，毕竟没有人会和简单过不去，不是吗？

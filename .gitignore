@@ -16,3 +16,12 @@
 *.exe
 *.out
 *.app
+hx_kernel
+src/floppy.img
+
+# XeLaTex
+*.aux
+*.log
+*.pdf
+*.toc
+

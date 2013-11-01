@@ -1,0 +1,166 @@
+% -*- coding: UTF-8 -*-
+% hurlex.tex
+% hurlex 开发文档
+
+% 我们采用 A4 纸，论文风格
+\documentclass[11pt, a4paper]{article}
+
+% 必要的宏包
+\usepackage{fontspec, graphicx, titlesec, xunicode, xltxtra, natbib}
+\usepackage{indentfirst, listings, xcolor, verbatim, fancyvrb, mdframed}
+
+% 显示中文的名称
+\renewcommand{\abstractname}{摘要} 
+\renewcommand{\contentsname}{目录} 
+\renewcommand{\listfigurename}{插图目录}
+\renewcommand{\listtablename}{表格目录}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\indexname}{索引}
+\renewcommand{\tablename}{表}
+\renewcommand{\figurename}{图}
+\renewcommand{\lstlistingname}{代码}
+
+% 定义我们的页面样式
+\newpagestyle{main}{
+	% 字体设置
+	\setmainfont{YaHei Consolas Hybrid}
+
+	% 使用中文的断行规则
+	\XeTeXlinebreaklocale "zh"
+	\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+
+	% 页边距设置
+	\usepackage[top = 1.2in, bottom = 1.2in, left = 1.2in, right = 1in]{geometry}
+
+	% 页眉和页脚设置
+	\sethead{\small\S\, \thesection\quad\sectiontitle}{}{$\cdot$~\thepage~$\cdot$}
+	\setfoot{}{}{}
+	\headrule
+	%\footrule
+
+	% 设置章节目录深度
+	\setcounter{tocdepth}{1}
+
+	% 设置章节标题格式
+	\titleformat{\section}{\centering\Large\bfseries}{\S\,\thesection}{1em}{}
+	\titleformat{\subsection}{\large\bfseries}{\S\,\thesubsection}{1em}{}
+	
+	% 段落首行缩进 2 字符
+	\setlength{\parindent}{2em}
+
+	% 段间距
+	\setlength{\parskip}{0.5\baselineskip}
+}
+
+% 设置文档页的样式
+\pagestyle{main}
+
+% 嵌入代码格式设置
+\lstset{numbers = left, 
+	keywordstyle = \color{blue},
+	numberstyle = \small\color{black},
+	backgroundcolor = \color{lightgray},
+	stepnumber = 1, 
+	showspaces = false,
+	showtabs = false,
+	tabsize = 8,
+	breaklines = tr,
+	extendedchars = false
+}
+
+% 修改日期的显示格式
+\renewcommand{\today}{\number\year 年\number\month 月\number\day 日}
+
+% 设置文档标题和作者信息
+\title{一个基于x86架构的简单内核实现}
+\author{hurley}
+\date{\today}
+
+% 设置参考文献的格式
+\bibliographystyle{plain}
+
+% 文档内容从这里开始
+\begin{document}
+
+% 输出标题
+\maketitle
+
+% 摘要
+\begin{abstract}
+这是一篇阐述如何在基于Intel x86架构的IBM PC机及其兼容计算机上构建一个简单的操作系统内核的教程。\allowbreak
+我们将从裸机出发，逐渐展示构建一个简单的操作系统内核的全过程。你可以跟随着笔者的脚步，\allowbreak
+慢慢体会一个小内核诞生的整体框架和所有细节，进一步了解操作系统的实现原理和在x86架构上的具体实现。\allowbreak
+\end{abstract}
+
+% 换页
+\clearpage
+
+% 输出目录
+\tableofcontents
+
+% 第1章
+\include{hurlex-chapt1}
+% 第2章
+\include{hurlex-chapt2}
+% 第3章
+\include{hurlex-chapt3}
+% 第4章
+\include{hurlex-chapt4}
+% 第5章
+\include{hurlex-chapt5}
+% 第6章
+\include{hurlex-chapt6}
+% 第7章
+\include{hurlex-chapt7}
+% 第8章
+\include{hurlex-chapt8}
+% 第9章
+\include{hurlex-chapt9}
+% 第10章
+\include{hurlex-chapt10}
+% 第11章
+\include{hurlex-chapt11}
+% 第12章
+\include{hurlex-chapt12}
+% 第13章
+\include{hurlex-chapt13}
+% 第14章
+\include{hurlex-chapt14}
+% 第15章
+\include{hurlex-chapt15}
+% 第16章
+\include{hurlex-chapt16}
+% 第17章
+\include{hurlex-chapt17}
+% 第18章
+\include{hurlex-chapt18}
+
+% 附录
+%\begin{appendix}
+%\end{appendix}
+
+% 列出所有的参考文献
+\begin{thebibliography}{99}
+	\bibitem {Jamesm} {JamesM's kernel development tutorials}, {http://www.jamesmolloy.co.uk/}
+
+	\bibitem {OSDev} {OS Dev}, {http://wiki.osdev.org/}, {2011}
+
+	\bibitem {IntelDoc} {Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume3 : System Programming Guide},
+		{Intel}, {1997-2003},
+
+	\bibitem {x86Asm} {《x86 汇编语言 —— 从实模式到保护模式》}, {李忠 王晓波 余杰},
+		 {电子工业出版社}, {2013}
+
+	\bibitem {Orange} {《Orange S:一个操作系统的实现》}, {于渊}, {电子工业出版社}, {2009}
+
+	\bibitem {x86PC} {《The x86 PC Assembly Language, Design and Interfacing》},
+		{Muhammad Ali Mazidi、Janice Gillispie Mazidi、Danny Causey}, {电子工业出版社}, {2009}
+
+	\bibitem {MOS} {《现代操作系统》}, {Andrew S. Tanenbaum}, {机械工业出版社}, {2012}
+
+	\bibitem {IntelMP} {《Intel 微处理器》}, {Barry B.Brey}, {机械工业出版社}, {2008}
+\end{thebibliography}
+
+\end{document}
+
