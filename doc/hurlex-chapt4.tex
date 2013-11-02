@@ -2,13 +2,13 @@
 % hurlex-chapt4.tex
 % hurlex 开发文档 第4章内容
 
-\section {相关库函数和调试打印函数}
+\section {字符模式下的显卡驱动}
 
-\par 本来计划着在这一章就开始介绍屏幕显示，但是考虑到我们还缺少必须的"基础设施"代码，比如需要的一些库函数和调试使用的函数\allowbreak
-都还处于未完成状态，所以还是先完成这些基础代码再继续吧。
+\par 本章开始，我们将开始描述对屏幕输出的控制了。在第二章我们简单谈过地址空间的事情，我们提到4G的地址空间并非全部指向\allowbreak
+主存储器，而是有部分的地址分给了其他外设。特别地，在地址空间的最低1MB处，有很多地址是属于外部设备的，下图描绘了该处地址\allowbreak
+映射的分布情况：
 
-\par 不必沮丧一时的滞后。我们常说磨刀不误砍柴工，这些辅助函数会在后期的开发中带来很多的方便。另外我还需要介绍\allowbreak
-调试的方法和一些必须的调试脚本，这样的话倘若代码有问题我们就可以很轻松的排错了。
+
 
 \par 首先是几个端口读写函数的实现。我们之前介绍过端口地址的概念，有的外设的相关存储单元在端口地址里，需要CPU通过特殊的in/out\allowbreak
 指令才可以访问到。但是C语言并没有直接操作端口的方法，而且频繁的内联汇编麻烦又容易出错。所以我们索性定义几个端口读写函数。\allowbreak
@@ -18,13 +18,13 @@
 #include "common.h"
 
 // 端口写一个字节
-void outb(uint16_t port, uint8_t value)
+inline void outb(uint16_t port, uint8_t value)
 {
 	asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
 }
 
 // 端口读一个字节
-uint8_t inb(uint16_t port)
+inline uint8_t inb(uint16_t port)
 {
 	uint8_t ret;
 
@@ -34,7 +34,7 @@ uint8_t inb(uint16_t port)
 }
 
 // 端口读一个字
-uint16_t inw(uint16_t port)
+inline uint16_t inw(uint16_t port)
 {
 	uint16_t ret;
 
@@ -62,6 +62,13 @@ uint16_t inw(uint16_t port);
 
 #endif // INCLUDE_COMMON_H_
 \end{lstlisting}
+
+\par 细心的读者想必已经发现了函数定义之前的inline关键字了吧？这是GNU对ANSI C的扩展，它和C++语言里的inline的作用是一样的。\allowbreak
+函数前面加上inline之后，编译器会尝试\footnote{没错，是尝试。内联对编译来说只是一个建议，编译器有权利根据实际情况自由处理。}\allowbreak
+在该函数的调用点进行直接进行代码展开，而不是传统的函数调用。这么做的既有传统函数的好处，即避免了重复性的编码，减少了出错的几率。\allowbreak
+又减少了函数的调用，提高了代码的执行效率。另外，你可能见过宏函数这种用法，但是宏函数是没有参数类型的检查的，相比inline还是逊了一筹。
+
+
 
 
 %\begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]

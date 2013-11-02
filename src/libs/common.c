@@ -19,13 +19,13 @@
 #include "common.h"
 
 // 端口写一个字节
-void outb(uint16_t port, uint8_t value)
+inline void outb(uint16_t port, uint8_t value)
 {
 	asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
 }
 
 // 端口读一个字节
-uint8_t inb(uint16_t port)
+inline uint8_t inb(uint16_t port)
 {
 	uint8_t ret;
 
@@ -35,7 +35,7 @@ uint8_t inb(uint16_t port)
 }
 
 // 端口读一个字
-uint16_t inw(uint16_t port)
+inline uint16_t inw(uint16_t port)
 {
 	uint16_t ret;
 
