@@ -4,18 +4,66 @@
 
 \section {相关库函数和调试打印函数}
 
-\par 本来计划着在这一章就开始介绍屏幕显示，但是考虑到我们还缺少必须的"基础设施"代码，比如我们需要的一些库函数和调试使用的函数\allowbreak
-都还处于未完成状态，所以我们还是先完成这些基础代码再继续吧。
+\par 本来计划着在这一章就开始介绍屏幕显示，但是考虑到我们还缺少必须的"基础设施"代码，比如需要的一些库函数和调试使用的函数\allowbreak
+都还处于未完成状态，所以还是先完成这些基础代码再继续吧。
 
-\par 不必沮丧我们一时的滞后。我们常说磨刀不误砍柴工，这些辅助函数会在后期的开发中给我们带来很多的方便。另外我们还需要介绍\allowbreak
+\par 不必沮丧一时的滞后。我们常说磨刀不误砍柴工，这些辅助函数会在后期的开发中带来很多的方便。另外我还需要介绍\allowbreak
 调试的方法和一些必须的调试脚本，这样的话倘若代码有问题我们就可以很轻松的排错了。
 
 \par 首先是几个端口读写函数的实现。我们之前介绍过端口地址的概念，有的外设的相关存储单元在端口地址里，需要CPU通过特殊的in/out\allowbreak
 指令才可以访问到。但是C语言并没有直接操作端口的方法，而且频繁的内联汇编麻烦又容易出错。所以我们索性定义几个端口读写函数。\allowbreak
 代码如下：
 
-\begin{lstlisting}[language = C, label = , caption = init/entry.c]
+\begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]
+#include "common.h"
 
+// 端口写一个字节
+void outb(uint16_t port, uint8_t value)
+{
+	asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
+}
+
+// 端口读一个字节
+uint8_t inb(uint16_t port)
+{
+	uint8_t ret;
+
+	asm volatile("inb %1, %0" : "=a" (ret) : "dN" (port));
+
+	return ret;
+}
+
+// 端口读一个字
+uint16_t inw(uint16_t port)
+{
+	uint16_t ret;
+
+	asm volatile ("inw %1, %0" : "=a" (ret) : "dN" (port));
+
+	return ret;
+}
 \end{lstlisting}
 
+\par 对应的头文件如下：
+\begin{lstlisting}[language = C, label = include/common.h, caption = include/common.h]
+#ifndef INCLUDE_COMMON_H_
+#define INCLUDE_COMMON_H_
+
+#include "types.h"
+
+// 端口写一个字节
+void outb(uint16_t port, uint8_t value);
+
+// 端口读一个字节
+uint8_t inb(uint16_t port);
+
+// 端口读一个字
+uint16_t inw(uint16_t port);
+
+#endif // INCLUDE_COMMON_H_
+\end{lstlisting}
+
+
+%\begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]
+%\end{lstlisting}
 
