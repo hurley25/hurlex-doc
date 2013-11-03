@@ -1,7 +1,7 @@
 /*
  * =====================================================================================
  *
- *       Filename:  monitor.h
+ *       Filename:  console.h
  *
  *    Description:  屏幕操作的相关函数的头文件
  *
@@ -16,9 +16,9 @@
  * =====================================================================================
  */
 
-#ifndef INCLUDE_MONITOR_H_
+#ifndef INCLUDE_CONSOLE_H_
 
-#define INCLUDE_MONITOR_H_
+#define INCLUDE_CONSOLE_H_
 
 #include "types.h"
 
@@ -60,4 +60,4 @@ void monitor_write_hex(uint32_t n, real_color_t back, real_color_t fore);
 // 屏幕输出一个十进制的整形数
 void monitor_write_dec(uint32_t n, real_color_t back, real_color_t fore);
 
-#endif  // INCLUDE_MONITOR_H_
+#endif  // INCLUDE_CONSOLE_H_
