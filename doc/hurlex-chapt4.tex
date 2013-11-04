@@ -33,7 +33,21 @@
 每2个字节表示屏幕上显示的一个字符。从屏幕的第一行开始对应，一行接着一行的对应下去。而这两个字节的前一个是显示字符的ASCII码，\allowbreak
 后一个是控制这个字符颜色和属性的控制信息，这个字节的8个bit位表示不同的含义。下图指出了每一位的含义：
 
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.25]{picture/chapt4/char_color.png}
+      \caption{字符属性示意图}
+\end{figure}
+
 \par 另外的一张图指出了文本模式下的颜色表：
+
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.4]{picture/chapt4/text_mode_color.png}
+      \caption{显卡文本模式的颜色表}
+\end{figure}
+
+\par 这两张图可以帮助我们在显卡的字符模式显示彩色的文本了，这对原理探索性质的显示也就足够了。
 
 \par 理解了显卡的文本模式的原理之后我们就要开始一些对屏幕控制的编码了。不过显卡除了显示内容的存储单元之外，还有部分的显示\allowbreak
 单元需要了解。这些显示控制单元被编制在了独立的I/O空间里，需要用特殊的in/out指令去读写。这里需要寄存器多达300多个，\allowbreak
@@ -97,7 +111,7 @@ uint16_t inw(uint16_t port);
 在该函数的调用点进行直接进行代码展开，而不是传统的函数调用。这么做的既有传统函数的好处，即避免了重复性的编码，减少了出错的几率。\allowbreak
 又减少了函数的调用，提高了代码的执行效率。另外，你可能见过宏函数这种用法，但是宏函数是没有参数类型的检查的，相比inline还是逊了一筹。
 
-
+\par 有了这几个端口读写函数，接下来
 
 
 %\begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]
