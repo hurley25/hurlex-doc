@@ -4,8 +4,9 @@
 
 \section {字符模式下的显卡驱动}
 
-\par 本章将开始描述对屏幕输出的控制。在第二章我们简单谈过地址空间的事情，并提到4G的地址空间并非全部指向主存储器，而是有部分\allowbreak
-的地址分给了其他外设。特别地，在地址空间的最低1MB处，有很多地址是属于外部设备的，下图描绘了该处地址映射的分布情况：
+\par 本章将开始描述内核对屏幕输出的控制。
+\par 在第二章我们简单的谈过地址空间的概念，并提到4G的地址空间并非全部指向主存储器，而是有部分的地址分给了其他外设。\allowbreak
+特别地，在地址空间的最低1MB处，有很多地址是属于外部设备的，下图描绘了该处地址映射的分布情况：
 
 \begin{figure}[ht]
       \centering
@@ -13,25 +14,26 @@
       \caption{低端地址空间的映射关系}
 \end{figure}
 
-\par 在PC上要显示文字，通常需要显示器和显卡这两个硬件设备。一般说来显卡负责提供显示\allowbreak
-内容，并控制具体的显示模块和状态；显示器的职责是负责将显卡呈递的内容可视化的显示出来。既然显卡需要控制显示的数据，自然就需要\allowbreak
+\par 在PC上要显示文字，通常需要显示器和显卡这两个硬件设备。一般来说显卡负责提供显示\allowbreak
+内容，并控制具体的显示模块和状态。显示器的职责是负责将显卡呈递的内容可视化的显示出来。既然显卡需要控制显示的数据，自然就需要\allowbreak
 存储这些待显示的内容，所以显卡就有自己的存储区域。这个存储区域叫做显示存储器（Video RAM，VRAM），简称显存。当然，访问显存\allowbreak
-就需要地址。上面提到的这个区域映射的就是工作在文本模式的显存。同时显卡还有另外一个工作模式叫做图形模式，这个模式是目前\allowbreak
-最常用的模式。
+就需要地址。CGA/EGA+ Chroma text video buffer 这个区域映射的就是工作在文本模式的显存。同时显卡还有另外一个工作模式叫做图形\allowbreak
+模式，这个模式是目前最最常用的模式。
 
-\par 我们知道，对于一个字符的编码通常有输入码、内码和字模码三种。其中字模码定义了一个字符在屏幕上显示的点阵坐标。一般说来，显卡\allowbreak
+\par 我们知道，对于一个字符的编码通常有输入码、内码和字模码三种。其中字模码定义了一个字符在屏幕上显示的点阵坐标。通常显卡\allowbreak
 内置一套关于基本英文字符的显示是很容易做到的，而内置汉字的显示就较为麻烦。\footnote{曾经有类似于"汉卡"之类的硬件出现，\allowbreak
 后来随着计算机处理速度的发展，这些工作一般由软件来负责了。}在这篇文档中我们只使用显卡的文本模式，不会涉及到图形模式的内容。\allowbreak
 因为一旦使用了图形模式的内容，我们就需要自行定义字符的字模码了，这很繁琐而且对我们理解操作系统原理的意义不是很大。\allowbreak
 所以我们只使用显卡的文本模式进行屏幕显示控制。所有在PC上工作的显卡，在加电初始化之后都会自动初始化到80*25的文本模式。\allowbreak
+\footnote{显卡还有其它分辨率的图形工作模式，但本文档不涉及。}\allowbreak
 在这个模式下，屏幕被划分为25行，每行可以显示80个字符，所以一屏可以显示2000个字符。上图中的0xB8000～0xBFFFF这个地址段\allowbreak
 便是映射到文本模式的显存的。当访问这些地址的时候，实际上读写的是显存区域，而显卡会周期性的读取这里的数据，并且把它们按\allowbreak
-顺序的显示在屏幕上。
+顺序显示在屏幕上。
 
 \par 那么，按照什么规则显示呢？这就要谈到内码了。内码定义了字符在内存中存储的形式，而英文编码就是大家所熟知的ASCII\allowbreak
 （American Standard Code for Information Interchange，美国信息交换标准代码）码了。对应的关系很简单，从0xB8000这个地址开始，\allowbreak
 每2个字节表示屏幕上显示的一个字符。从屏幕的第一行开始对应，一行接着一行的对应下去。而这两个字节的前一个是显示字符的ASCII码，\allowbreak
-后一个是控制这个字符颜色和属性的控制信息，这个字节的8个bit位表示不同的含义。下图指出了每一位的含义：
+后一个是控制这个字符颜色和属性的控制信息，这个字节的8个bit位表示不同的含义。每一位的含义如图所示：
 
 \begin{figure}[ht]
       \centering
@@ -39,7 +41,7 @@
       \caption{字符属性示意图}
 \end{figure}
 
-\par 另外的一张图指出了文本模式下的颜色表：
+\par 这些位的组合效果如下图所示：
 
 \begin{figure}[ht]
       \centering
@@ -47,15 +49,15 @@
       \caption{显卡文本模式的颜色表}
 \end{figure}
 
-\par 这两张图可以帮助我们在显卡的字符模式显示彩色的文本了，这对原理探索性质的显示也就足够了。
+\par 这两张图可以帮助我们在显卡的字符模式显示彩色的文本了，懂得这些原理对于探索性质的显示也就足够了。
 
-\par 理解了显卡的文本模式的原理之后我们就要开始一些对屏幕控制的编码了。不过显卡除了显示内容的存储单元之外，还有部分的显示\allowbreak
-单元需要了解。这些显示控制单元被编制在了独立的I/O空间里，需要用特殊的in/out指令去读写。这里需要寄存器多达300多个，\allowbreak
-显然无法一一映射到I/O端口的地址空间。对此工程师们解决方案是，将一个端口作为内部寄存器的索引：0x3D4，再通过 0x3D5\allowbreak
+\par 理解了显卡文本模式的原理之后接下来就是对屏幕显示控制编码了。不过显卡除了显示内容的存储单元之外，还有部分的显示控制\allowbreak
+单元需要了解。这些显示控制单元被编制在了独立的I/O空间里，需要用特殊的in/out指令去读写。这里相关的控制寄存器多达300多个，\allowbreak
+显然无法一一映射到I/O端口的地址空间。对此工程师们解决方案是，将一个端口作为内部寄存器的索引：0x3D4，再通过0x3D5\allowbreak
 端口来设置相应寄存器的值。
 
-\par 首先是几个端口读写函数的实现。因为C语言并没有直接操作端口的方法，而且频繁的内联汇编麻烦又容易出错。所以好的做法就是定义\allowbreak
-几个端口读写函数。代码如下：
+\par 在具体的设置之前，我们首先需要几个端口读写函数的实现。因为C语言并没有直接操作端口的方法，而且频繁的内联汇编麻烦又容易\allowbreak
+出错。所以好的做法就是定义几个端口读写函数。代码如下：
 
 \begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]
 #include "common.h"
@@ -111,9 +113,223 @@ uint16_t inw(uint16_t port);
 在该函数的调用点进行直接进行代码展开，而不是传统的函数调用。这么做的既有传统函数的好处，即避免了重复性的编码，减少了出错的几率。\allowbreak
 又减少了函数的调用，提高了代码的执行效率。另外，你可能见过宏函数这种用法，但是宏函数是没有参数类型的检查的，相比inline还是逊了一筹。
 
-\par 有了这几个端口读写函数，接下来
+\par 有了这几个端口读写函数，接下来是颜色定义的枚举和一些屏幕控制函数的声明。代码如下
+\begin{lstlisting}[language = C, label = include/console.h, caption = include/console.h]
+#ifndef INCLUDE_CONSOLE_H_
+#define INCLUDE_CONSOLE_H_
 
+#include "types.h"
 
-%\begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]
-%\end{lstlisting}
+typedef
+enum real_color {
+	rc_black = 0,
+	rc_blue = 1,
+	rc_green = 2,
+	rc_cyan = 3,
+	rc_red = 4,
+	rc_magenta = 5,
+	rc_brown = 6,
+	rc_light_grey = 7,
+	rc_dark_grey = 8,
+	rc_light_blue = 9,
+	rc_light_green = 10,
+	rc_light_cyan = 11,
+	rc_light_red = 12,
+	rc_light_magenta = 13,
+	rc_light_brown  = 14, 	// yellow
+	rc_white = 15
+} real_color_t;
+
+// 清屏操作
+void monitor_clear();
+
+// 屏幕输出一个字符  带颜色
+void monitor_putc_color(char c, real_color_t back,
+				real_color_t fore);
+
+// 屏幕打印一个以 \0 结尾的字符串  默认黑底白字
+void monitor_write(char *cstr);
+
+// 屏幕打印一个以 \0 结尾的字符串  带颜色
+void monitor_write_color(char *cstr, real_color_t back,
+				     real_color_t fore);
+
+// 屏幕输出一个十六进制的整型数
+void monitor_write_hex(uint32_t n, real_color_t back,
+				    real_color_t fore);
+
+// 屏幕输出一个十进制的整型数
+void monitor_write_dec(uint32_t n, real_color_t back, 
+					real_color_t fore);
+
+#endif  // INCLUDE_CONSOLE_H_
+\end{lstlisting}
+
+\par 参照着前面的表格，理解颜色的枚举类型并不困难。接下来是显存起始位置和当前输出的屏幕位置的变量定义。同时，我们将屏幕\allowbreak
+抽象为一个80*25的二维数组，每个数组成员都是2个字节，表示屏幕上显示的一个字符。
+
+\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+// VGA 的显示缓冲的起点是 0xB8000
+static uint16_t *video_memory = (uint16_t *)0xB8000;
+
+// 屏幕"光标"的坐标
+static uint8_t cursor_x = 0;
+static uint8_t cursor_y = 0;
+\end{lstlisting}
+
+\par 请大家留意这里变量定义时候的 static 限定符，当一个全局变量或者函数只在本模块文件内被使用时，最好限定其作用域。每个模块\allowbreak
+应当尽可能的向外部暴露较少的接口。
+
+\par 在本模块内，cursor\_x 和 cursor\_y 这两个变量指明了逻辑上的当前输出位置，但是并没有实际上移动硬件的显示"光标"，\allowbreak
+下面的函数实现了根据这两个变量的值移动光标的功能。
+
+\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+static void move_cursor()
+{
+	// 屏幕是 80 字节宽
+	uint16_t cursorLocation = cursor_y * 80 + cursor_x;
+	
+	// 在这里用到的两个内部寄存器的编号为14与15，分别表示光标位置
+	// 的高8位与低8位。
+
+	outb(0x3D4, 14); 	// 告诉 VGA 我们要设置光标的高字节
+	outb(0x3D5, cursorLocation >> 8); // 发送高 8 位
+	outb(0x3D4, 15); 	// 告诉 VGA 我们要设置光标的低字节
+	outb(0x3D5, cursorLocation);      // 发送低 8 位
+}
+\end{lstlisting}
+
+\par 这里的端口和设置值都是固定的，也没有什么道理可讲。虽然显卡的各项技术发展的很快，但是这个原始的VGA标准被所有显卡完整\allowbreak
+的保存了下来。
+
+\par 然后是清屏操作，其实这里的"清屏"很简单，其实就是用白底黑字的"空格符"覆盖整个屏幕的显示区域罢了。这么做自然就实现了\allowbreak
+我们想要的"清屏"操作了。代码很简单：
+
+\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+void monitor_clear()
+{
+	uint8_t attribute_byte = (0 << 4) | (15 & 0x0F);
+	uint16_t blank = 0x20 | (attribute_byte << 8);
+
+	int i;
+	for (i = 0; i < 80 * 25; i++) {
+	      video_memory[i] = blank;
+	}
+
+	cursor_x = 0;
+	cursor_y = 0;
+	move_cursor();
+}
+\end{lstlisting}
+
+\par 那么屏幕滚动呢？用C语言来描述实际上就是将后24行的数据全部向上挪动一行，最后一行清空罢了，就是这么简单。
+
+\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+static void scroll()
+{
+	// attribute_byte 被构造出一个黑底白字的描述格式
+	uint8_t attribute_byte = (0 << 4) | (15 & 0x0F);
+	uint16_t blank = 0x20 | (attribute_byte << 8);  // space 是 0x20
+
+	// cursor_y 到 25 的时候，就该换行了
+	if (cursor_y >= 25) {
+		// 将所有行的显示数据复制到上一行，第一行永远消失了...
+		int i;
+		for (i = 0 * 80; i < 24 * 80; i++) {
+		      video_memory[i] = video_memory[i+80];
+		}
+		// 最后的一行数据现在填充空格，不显示任何字符
+		for (i = 24 * 80; i < 25 * 80; i++) {
+		      video_memory[i] = blank;
+		}
+		// 向上移动了一行，所以 cursor_y 现在是 24
+		cursor_y = 24;
+	}
+}
+\end{lstlisting}
+
+\par 那么屏幕显示字符串呢？我们可以先实现屏幕显示一个字符的函数，那么屏幕显示一个字符串不就有了么。这几个函数一并给出吧。
+
+\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+void monitor_putc_color(char c, real_color_t back, real_color_t fore)
+{
+	uint8_t back_color = (uint8_t)back;
+	uint8_t fore_color = (uint8_t)fore;
+
+	uint8_t attribute_byte = (back_color << 4) | (fore_color & 0x0F);
+	uint16_t attribute = attribute_byte << 8;
+
+	// 0x08 是 退格键 的 ASCII 码
+	// 0x09 是 tab 键 的 ASCII 码
+	if (c == 0x08 && cursor_x) {
+	      cursor_x--;
+	} else if (c == 0x09) {
+	      cursor_x = (cursor_x+8) & ~(8-1);
+	} else if (c == '\r') {
+	      cursor_x = 0;
+	} else if (c == '\n') {
+		cursor_x = 0;
+		cursor_y++;
+	} else if (c >= ' ') {
+		video_memory[cursor_y*80 + cursor_x] = c | attribute;
+		cursor_x++;
+	}
+
+	// 每 80 个字符一行，满80就必须换行了
+	if (cursor_x >= 80) {
+		cursor_x = 0;
+		cursor_y ++;
+	}
+
+	// 如果需要的话滚动屏幕显示
+	scroll();
+
+	// 移动硬件的输出 "光标"
+	move_cursor();
+}
+
+void monitor_write(char *cstr)
+{
+	while (*cstr) {
+	      monitor_putc_color(*cstr++, rc_black, rc_white);
+	}
+}
+
+void monitor_write_color(char *cstr, real_color_t back, real_color_t fore)
+{
+	while (*cstr) {
+	      monitor_putc_color(*cstr++, back, fore);
+	}
+}
+\end{lstlisting}
+
+\par 代码里唯一需要注意的便是输出后要检查当前的位置和判断一些特殊的符号表示的操作，例如换行之类的实现。同时一定要注意修改存储\allowbreak
+当前位置的两个变量和移动屏幕上的光标，而且屏幕输出满了以后要上滚。我们暂时不考虑诸如屏幕翻页之类的功能。至于屏幕输出十六进制\allowbreak
+数字和十进制数字的函数请大家自己实现，相信这并不困难。
+
+\par 屏幕的操作到这里就告一段落了，我们修改下初始化函数，感受一下今天的成果吧。
+
+\begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
+#include "multiboot.h"
+#include "console.h"
+
+int kern_entry(multiboot_t *mboot_ptr)
+{
+	monitor_clear();
+
+	monitor_write_color("Hello, OS kernel!\n", rc_black, rc_green);
+
+	return 0;
+}
+\end{lstlisting}
+
+\par 编译运行，干净的屏幕上出现了我们绿色的文字，还有下一行闪烁着的输入光标。
+
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.5]{picture/chapt4/hello_os_world_green.png}
+      \caption{屏幕输出控制的展示}
+\end{figure}
+
+\par 本章的内容到这里就结束了，下一章我们缓缓脚步，来完成一些更重要的模块。
 

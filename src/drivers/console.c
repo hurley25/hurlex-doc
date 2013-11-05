@@ -16,7 +16,7 @@
  * =====================================================================================
  */
 
-#include "monitor.h"
+#include "console.h"
 #include "common.h"
 
 /*
@@ -168,7 +168,7 @@ void monitor_write_hex(uint32_t n, real_color_t back, real_color_t fore)
 	}
 }
 
-// 屏幕输出一个十进制的整形数
+// 屏幕输出一个十进制的整型数
 void monitor_write_dec(uint32_t n, real_color_t back, real_color_t fore)
 {
 	if (n == 0) {
