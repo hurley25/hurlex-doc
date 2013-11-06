@@ -52,9 +52,8 @@ struct multiboot_t {
 	uint32_t mods_addr;
 	
 	/**
-	 * ELF 格式内核映像的section头表、每项的大小、一共有几项以及作为名字索引的字符串表。
-	 * 它们对应于可执行可连接格式（ELF）的program头中的shdr_* 项（shdr_num等）。
-	 * 所有的section都会被载入，ELF section头的物理地址域指向所有的section在内存中的位置。
+	 * ELF 格式内核映像的section头表。
+	 * 包括每项的大小、一共有几项以及作为名字索引的字符串表。
 	 */
 	uint32_t num;
 	uint32_t size;
@@ -64,7 +63,7 @@ struct multiboot_t {
 	/**
 	 * 以下两项指出保存由BIOS提供的内存分布的缓冲区的地址和长度
 	 * mmap_addr是缓冲区的地址，mmap_length是缓冲区的总大小
-	 * 缓冲区由一个或者多个下面的大小/结构对 mmap_entry_t（size实际上是用来跳过下一个对的）组成
+	 * 缓冲区由一个或者多个下面的大小/结构对 mmap_entry_t 组成
 	 */
 	uint32_t mmap_length;		
 	uint32_t mmap_addr;

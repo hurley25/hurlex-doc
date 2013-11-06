@@ -268,10 +268,8 @@ struct multiboot_t {
 	uint32_t mods_addr;
 	
 	/**
-	 * ELF 格式内核映像的 section 头表、每项的大小、一共有几项以及作为名字索引
-	 * 的字符串表。它们对应于可执行可连接格式的 program 头中的 shdr_* 项。
-	 * 所有的 section 都会被载入，ELF section 头的物理地址域指向所有的
-	 * section 在内存中的位置。
+	 * ELF 格式内核映像的 section 头表。包括每项的大小、一共有几项以及作为名字索引
+	 * 的字符串。
 	 */
 	uint32_t num;
 	uint32_t size;
@@ -322,8 +320,141 @@ extern multiboot_t *glb_mboot_ptr;
 \end{lstlisting}
 
 \par 结构体中有很多注释，大家结合具体的协议文档很容易就可以看懂。我们暂时需要关心的主要是符号表，其它的信息我们之后\allowbreak
-用到的时候再讨论。
+用到的时候再讨论。也就是说，我们暂时只关注结构体中以下几个字段的内容即可：
 
+\begin{lstlisting}[language = C, label = include/multiboot.h, caption = include/multiboot.h]
+	......
+	/**
+	 * ELF 格式内核映像的 section 头表。
+	 * 包括每项的大小、一共有几项以及作为名字索引的字符串表。
+	 */
+	uint32_t num;
+	uint32_t size;
+	uint32_t addr;
+	uint32_t shndx;
+	......
+\end{lstlisting}
 
+要理解下面的内容还真有些困难，因为它涉及的面太广了。我们先以ELF的文件格式做为切入点。我们先添加\allowbreak
+elf.h这个头文件：
 
+\begin{lstlisting}[language = C, label = include/elf.h, caption = include/elf.h]
+#ifndef INCLUDE_ELF_H_
+#define INCLUDE_ELF_H_
 
+#include "types.h"
+#include "multiboot.h"
+
+#define ELF32_ST_TYPE(i) ((i)&0xf)
+
+// ELF 格式区段头
+typedef
+struct elf_section_header_t {
+  uint32_t name;
+  uint32_t type;
+  uint32_t flags;
+  uint32_t addr;
+  uint32_t offset;
+  uint32_t size;
+  uint32_t link;
+  uint32_t info;
+  uint32_t addralign;
+  uint32_t entsize;
+} __attribute__((packed)) elf_section_header_t;
+
+// ELF 格式符号
+typedef
+struct elf_symbol_t {
+  uint32_t name;
+  uint32_t value;
+  uint32_t size;
+  uint8_t  info;
+  uint8_t  other;
+  uint16_t shndx;
+} __attribute__((packed)) elf_symbol_t;
+
+// ELF 信息
+typedef
+struct elf_t {
+  elf_symbol_t *symtab;
+  uint32_t      symtabsz;
+  const char   *strtab;
+  uint32_t      strtabsz;
+} elf_t;
+
+// 从 multiboot_t 结构获取ELF信息
+elf_t elf_from_multiboot(multiboot_t *mb);
+
+// 查看ELF的符号信息
+const char *elf_lookup_symbol(uint32_t addr, elf_t *elf);
+
+#endif 	// INCLUDE_ELF_H_
+\end{lstlisting}
+
+\par 这段结构体定义里包含了ELF文件的区段头、符号表等信息。我们给出从multiboot\_t结构中提取出ELF相关信息的代码：
+
+\begin{lstlisting}[language = C, label = kernel/debug/elf.c, caption = kernel/debug/elf.c]
+#include "common.h"
+#include "string.h"
+#include "elf.h"
+
+// 从 multiboot_t 结构获取ELF信息
+elf_t elf_from_multiboot(multiboot_t *mb)
+{
+	int i;
+	elf_t elf;
+	elf_section_header_t *sh = (elf_section_header_t *)mb->addr;
+
+	uint32_t shstrtab = sh[mb->shndx].addr;
+	for (i = 0; i < mb->num; i++) {
+		const char *name = (const char *)(shstrtab + sh[i].name);
+		// 在 GRUB 提供的 multiboot 信息中寻找
+		// 内核 ELF 格式所提取的字符串表和符号表
+		if (strcmp(name, ".strtab") == 0) {
+			elf.strtab = (const char *)sh[i].addr;
+			elf.strtabsz = sh[i].size;
+		}
+		if (strcmp(name, ".symtab") == 0) {
+			elf.symtab = (elf_symbol_t*)sh[i].addr;
+			elf.symtabsz = sh[i].size;
+		}
+	}
+
+	return elf;
+}
+
+// 查看ELF的符号信息
+const char *elf_lookup_symbol(uint32_t addr, elf_t *elf)
+{
+	int i;
+
+	for (i = 0; i < (elf->symtabsz / sizeof(elf_symbol_t)); i++) {
+		if (ELF32_ST_TYPE(elf->symtab[i].info) != 0x2) {
+		      continue;
+		}
+		// 通过函数调用地址查到函数的名字
+		if ( (addr >= elf->symtab[i].value) && (addr < (elf->symtab[i].value + elf->symtab[i].size)) ) {
+			return (const char *)((uint32_t)elf->strtab + elf->symtab[i].name);
+		}
+	}
+
+	return NULL;
+}
+\end{lstlisting}
+
+\par 我们之前多次提过GRUB在载入内核之后，会读取ELF并把相关的信息\allowbreak
+组织成结构体放在multiboot\_t结构，并把结构体指针放在ebx寄存器里传递给内核。其multiboot\_t结构的addr成员便指向的是\allowbreak
+elf\_section\_header\_t类型的结构体数组，num成员是这个结构体数组的成员个数。
+
+\par 这里的代码可能让大家一下子有点蒙，如果你觉得无从下手的话不妨在纸上画一画这几个结构体的关系图，这能帮助你理解。\allowbreak
+对于这里的代码大家不必过于深究，毕竟ELF格式只是Linux平台下的一种可执行格式，而本文档的目的是想让大家建立对项目的\allowbreak
+整体把握，细节问题就留给大家自己去理解吧。
+
+\par 通过以上的努力，我们获取了ELF文件中关于每个函数的名称和它们代码的区域，那么此时如何使用这些信息寻找函数名称呢？\allowbreak
+其实大家从elf\_lookup\_symbol函数的实现里就能看出来。我们提供了一个地址，然后查询这个地址在哪个函数的代码区间里，然后\allowbreak
+返回了这个函数名的字符串指针。
+
+\par 终于到了最后的函数调用栈问题了，这也是我们最终的打印调用栈函数panic的实现原理。
+
+%\begin{lstlisting}[language = C, label = include/multiboot.h, caption = include/multiboot.h]
+%\end{lstlisting}
