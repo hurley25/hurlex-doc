@@ -150,26 +150,22 @@ enum real_color {
 } real_color_t;
 
 // 清屏操作
-void monitor_clear();
+void console_clear();
 
 // 屏幕输出一个字符  带颜色
-void monitor_putc_color(char c, real_color_t back,
-				real_color_t fore);
+void console_putc_color(char c, real_color_t back, real_color_t fore);
 
 // 屏幕打印一个以 \0 结尾的字符串  默认黑底白字
-void monitor_write(char *cstr);
+void console_write(char *cstr);
 
 // 屏幕打印一个以 \0 结尾的字符串  带颜色
-void monitor_write_color(char *cstr, real_color_t back,
-				     real_color_t fore);
+void console_write_color(char *cstr, real_color_t back, real_color_t fore);
 
 // 屏幕输出一个十六进制的整型数
-void monitor_write_hex(uint32_t n, real_color_t back,
-				    real_color_t fore);
+void console_write_hex(uint32_t n, real_color_t back, real_color_t fore);
 
 // 屏幕输出一个十进制的整型数
-void monitor_write_dec(uint32_t n, real_color_t back, 
-					real_color_t fore);
+void console_write_dec(uint32_t n, real_color_t back, real_color_t fore);
 
 #endif  // INCLUDE_CONSOLE_H_
 \end{lstlisting}
@@ -203,10 +199,10 @@ static void move_cursor()
 	// 在这里用到的两个内部寄存器的编号为14与15，分别表示光标位置
 	// 的高8位与低8位。
 
-	outb(0x3D4, 14); 	// 告诉 VGA 我们要设置光标的高字节
-	outb(0x3D5, cursorLocation >> 8); // 发送高 8 位
-	outb(0x3D4, 15); 	// 告诉 VGA 我们要设置光标的低字节
-	outb(0x3D5, cursorLocation);      // 发送低 8 位
+	outb(0x3D4, 14); 			// 告诉 VGA 我们要设置光标的高字节
+	outb(0x3D5, cursorLocation >> 8); 	// 发送高 8 位
+	outb(0x3D4, 15); 			// 告诉 VGA 我们要设置光标的低字节
+	outb(0x3D5, cursorLocation);      	// 发送低 8 位
 }
 \end{lstlisting}
 
@@ -219,7 +215,7 @@ static void move_cursor()
 我们想要的"清屏"操作了。代码很简单：
 
 \begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
-void monitor_clear()
+void console_clear()
 {
 	uint8_t attribute_byte = (0 << 4) | (15 & 0x0F);
 	uint16_t blank = 0x20 | (attribute_byte << 8);
@@ -250,13 +246,16 @@ static void scroll()
 	if (cursor_y >= 25) {
 		// 将所有行的显示数据复制到上一行，第一行永远消失了...
 		int i;
+		
 		for (i = 0 * 80; i < 24 * 80; i++) {
 		      video_memory[i] = video_memory[i+80];
 		}
+
 		// 最后的一行数据现在填充空格，不显示任何字符
 		for (i = 24 * 80; i < 25 * 80; i++) {
 		      video_memory[i] = blank;
 		}
+		
 		// 向上移动了一行，所以 cursor_y 现在是 24
 		cursor_y = 24;
 	}
@@ -268,7 +267,7 @@ static void scroll()
 \par 那么屏幕显示字符串呢？我们可以先实现屏幕显示一个字符的函数，那么屏幕显示一个字符串不就可以了么。这几个函数的实现如下：
 
 \begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
-void monitor_putc_color(char c, real_color_t back, real_color_t fore)
+void console_putc_color(char c, real_color_t back, real_color_t fore)
 {
 	uint8_t back_color = (uint8_t)back;
 	uint8_t fore_color = (uint8_t)fore;
@@ -301,21 +300,21 @@ void monitor_putc_color(char c, real_color_t back, real_color_t fore)
 	// 如果需要的话滚动屏幕显示
 	scroll();
 
-	// 移动硬件的输出 "光标"
+	// 移动硬件的输入光标
 	move_cursor();
 }
 
-void monitor_write(char *cstr)
+void console_write(char *cstr)
 {
 	while (*cstr) {
-	      monitor_putc_color(*cstr++, rc_black, rc_white);
+	      console_putc_color(*cstr++, rc_black, rc_white);
 	}
 }
 
-void monitor_write_color(char *cstr, real_color_t back, real_color_t fore)
+void console_write_color(char *cstr, real_color_t back, real_color_t fore)
 {
 	while (*cstr) {
-	      monitor_putc_color(*cstr++, back, fore);
+	      console_putc_color(*cstr++, back, fore);
 	}
 }
 \end{lstlisting}
@@ -329,14 +328,13 @@ void monitor_write_color(char *cstr, real_color_t back, real_color_t fore)
 \par 屏幕的操作到这里就告一段落了，我们修改下初始化函数，感受一下今天的成果吧。
 
 \begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
-#include "multiboot.h"
 #include "console.h"
 
 int kern_entry(multiboot_t *mboot_ptr)
 {
-	monitor_clear();
+	console_clear();
 
-	monitor_write_color("Hello, OS kernel!\n", rc_black, rc_green);
+	console_write_color("Hello, OS kernel!\n", rc_black, rc_green);
 
 	return 0;
 }

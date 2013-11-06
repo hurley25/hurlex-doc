@@ -144,8 +144,15 @@ MBOOT_CHECKSUM 		equ 	-(MBOOT_HEADER_MAGIC+MBOOT_HEADER_FLAGS)
 ; 我们只使用到这些就够了，更多的详细说明请参阅 GNU 相关文档
 ;-----------------------------------------------------------
 
-[BITS 32]  	; 所有代码以 32-bit 的方式编译
+section .bss 			 ; 未初始化的数据段从这里开始
+stack:
+	resb 32768 	 	 ; 这里作为内核栈
+glb_mboot_ptr: 			 ; 全局的 multiboot 结构体指针
+	resb 4
 
+STACK_TOP equ $-stack-1 	 ; 内核栈顶，$ 符指代是当前地址
+
+[BITS 32]  	; 所有代码以 32-bit 的方式编译
 section .text 	; 代码段从这里开始
 
 ; 在代码段的起始位置设置符合 Multiboot 规范的标记
@@ -154,24 +161,20 @@ dd MBOOT_HEADER_MAGIC 	; GRUB 会通过这个魔数判断该映像是否支持
 dd MBOOT_HEADER_FLAGS   ; GRUB 的一些加载时选项，其详细注释在定义处
 dd MBOOT_CHECKSUM       ; 检测数值，其含义在定义处
 
-[GLOBAL start] 		; 内核代码入口，此处提供该声明给 ld 链接器
+[GLOBAL start] 		; 向外部声明内核代码入口，此处提供该声明给链接器
+[GLOBAL glb_mboot_ptr] 	; 向外部声明 struct multiboot * 变量
 [EXTERN kern_entry] 	; 声明内核 C 代码的入口函数
 
 start:
-	cli  		; 此时还没有设置好保护模式的中断处理
-			; 所以必须关闭中断
-	mov esp, stack  ; 设置内核栈地址
-	push ebx 	; 调用内核 main 函数的参数
-	mov ebp, 0 	; 帧指针修改为 0
-	call kern_entry	; 调用内核入口函数
+	cli  			 ; 此时还没有设置好保护模式的中断处理，要关闭中断
+				 ; 所以必须关闭中断
+	mov esp, STACK_TOP  	 ; 设置内核栈地址
+	mov ebp, 0 		 ; 帧指针修改为 0
+	mov [glb_mboot_ptr], ebx ; 将 ebx 中存储的指针存入全局变量
+	call kern_entry		 ; 调用内核入口函数
 stop:
-	hlt 		; 停机指令，什么也不做，可以降低 CPU 功耗
-	jmp stop 	; 到这里结束，关机什么的后面再说
-	
-[GLOBAL stack]
-section .bss 		; 未初始化的数据段从这里开始
-	resb 32768 	; 这里作为内核栈
-stack:
+	hlt 			 ; 停机指令，可以降低 CPU 功耗
+	jmp stop 		 ; 到这里结束，关机什么的后面再说
 \end{lstlisting} 
 
 \par 我们简单的介绍下这段代码做的事情。
@@ -182,7 +185,7 @@ stack:
 start了，入口代码很短，主要做的是关闭中断，传参数(按照协议，GRUB把一些计算机硬件和我们内核文件相关的信息放在了一个结构体\allowbreak
 中，并且将这个结构体指针放在了ebx寄存器中)并且调用内核的入口函数。\footnote{如果你对这里不是很清楚的话,暂时就先跳过去,到后面\allowbreak
 解释完函数调用栈之后再回来看。如果你现在非要现在弄明白的话,Google是最好的老师。}等到这个函数返回之后，内核就进入了一个死循环了。\allowbreak
-\footnote{大家有兴趣的话可以尝试自己先实现关机操作。}
+\footnote{大家有兴趣的话可以尝试自己先实现关机操作，若是对代码有的地方不理解可以参考NASM的手册。}
 
 \par 这段代码我加上了很多注释，希望这能给你阅读代码带来便利。如果你之前按照我的要求认真的去翻阅了GRUB的Multiboot\allowbreak
 标准的话，因该很容易就能理解这里代码的含义。如果你理解起来感到很困难，那就结合Multiboot标准的相关规范仔细阅读，这个过程是必须的。
@@ -190,64 +193,13 @@ start了，入口代码很短，主要做的是关闭中断，传参数(按照�
 \par OK，理解了上面这两段代码，我们暂时的告别汇编，用C语言来实现内核的入口函数。
 
 \begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
-#include "multiboot.h"
-
-int kern_entry(multiboot_t *mboot_ptr)
+int kern_entry()
 {
 	return 0;
 }
 \end{lstlisting} 
 
-\par 还有两个包含的头文件，代码分别如下:
-
-\begin{lstlisting}[language = C, label = include/multiboot.h, caption = include/multiboot.h]
-#ifndef INCLUDE_MULTIBOOT_H_
-#define INCLUDE_MULTIBOOT_H_
-
-#include "types.h"
-
-typedef
-struct multiboot_t {
-	uint32_t flags;		// Multiboot 的版本信息
-	uint32_t mem_lower;
-	uint32_t mem_upper;
-	uint32_t boot_device;
-	uint32_t cmdline;	// 内核命令行
-	uint32_t mods_count;	// boot 模块列表
-	uint32_t mods_addr;
-	uint32_t num;
-	uint32_t size;
-	uint32_t addr;
-	uint32_t shndx;
-
-	uint32_t mmap_length;		
-	uint32_t mmap_addr;
-	
-	uint32_t drives_length; // 指出第一个驱动器结构的物理地址	
-	uint32_t drives_addr; 	// 指出第一个驱动器这个结构的大小
-	uint32_t config_table; 	// ROM 配置表
-	uint32_t boot_loader_name; 	// boot loader 的名字
-	uint32_t apm_table; 	    	// APM 表
-	uint32_t vbe_control_info;
-	uint32_t vbe_mode_info;
-	uint32_t vbe_mode;
-	uint32_t vbe_interface_seg;
-	uint32_t vbe_interface_off;
-	uint32_t vbe_interface_len;
-} __attribute__((packed)) multiboot_t;
-
-typedef
-struct mmap_entry_t {
-	uint32_t size; 	// 留意 size 是不含 size 自身变量的大小
-	uint32_t base_addr_low;
-	uint32_t base_addr_high;
-	uint32_t length_low;
-	uint32_t length_high;
-	uint32_t type;
-} __attribute__((packed)) mmap_entry_t;
-
-#endif 	// INCLUDE_MULTIBOO
-\end{lstlisting}
+\par 还有一个在后面需要用到的头文件，主要是几个宏和一些类型的重定义。代码如下:
 
 \begin{lstlisting}[language = C, label = include/types.h, caption = include/types.h]
 #ifndef INCLUDE_TYPES_H_
@@ -256,6 +208,7 @@ struct mmap_entry_t {
 #ifndef NULL
 	#define NULL 0
 #endif
+
 #ifndef TRUE
 	#define TRUE  1
 	#define FALSE 0
@@ -271,7 +224,6 @@ typedef          char  int8_t;
 #endif 	// INCLUDE_TYPES_H_
 \end{lstlisting}
 
-\par 由于代码篇幅太大，具体的注释我保留在参考代码里了。但是我还是建议大家最好自己去查资料写注释，这样你能学到更多东西。
 \par 最后我再列出当GRUB载入我们的内核时，CPU的一些状态信息:\allowbreak
 \footnote{现在看不懂没关系，我们讲到后面会再次回来分析这些状态信息。}
 
@@ -287,14 +239,13 @@ typedef          char  int8_t;
 	\end{enumerate}
 \end{mdframed}
 
-\par 准备好了这一切之后，再把我们之前提到过的软盘镜像放在Makefile文件的同级目录下，现在目录结构是这样的:
+\par 准备好了这一切之后，再把之前完成的软盘镜像放在Makefile文件的同级目录下，现在目录结构是这样的:
 \begin{Verbatim}[frame=single]
 .
 |-- boot
 |   `-- boot.s
 |-- floppy.img
 |-- include
-|   |-- multiboot.h
 |   `-- types.h
 |-- init
 |   |-- entry.c
@@ -302,7 +253,7 @@ typedef          char  int8_t;
 `-- scripts
     `-- kernel.ld
 
-4 directories, 7 files
+4 directories, 6 files
 \end{Verbatim}
 
 \par 我们直接执行 make 命令编译代码，没有意外的话会生成一个叫做hx\_kernel的文件，并且自动挂载软盘镜像把这个文件复制进去。\allowbreak
@@ -321,9 +272,9 @@ typedef          char  int8_t;
 按照如下代码修改kern\_entry函数:
 
 \begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
-#include "multiboot.h"
+#include "types.h"
 
-int kern_entry(multiboot_t *mboot_ptr)
+int kern_entry()
 {
 	uint8_t *input = (uint8_t *)0xB8000;
 	uint8_t color = (0 << 4) | (15 & 0x0F);
@@ -350,14 +301,16 @@ int kern_entry(multiboot_t *mboot_ptr)
 }
 \end{lstlisting} 
 
-\par 至于代码是什么意思大家先不用纠结，下一章将详细探究。现在我们编译并且启动虚拟机，就能看到了第一阶段的成果，\allowbreak
-屏幕上华丽丽的输出了"Hello, OS World!"的字样。\footnote{不必介意其他的字符，那是因为我们还没有清屏的操作。}
+\par 现在我们编译并且启动虚拟机，就能看到了第一阶段的成果，屏幕上华丽丽的输出了"Hello, OS World!"的字样。\allowbreak
+\footnote{不必介意其他的字符，那是因为我们还没有清屏的操作。}
 
 \begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt3/hello_os_world.png}
       \caption{虚拟机里运行的 Hello, OS World!}
 \end{figure}
+
+\par 至于代码是什么意思大家先不用纠结，下一章将详细探究。
 
 \par 辛苦了这么久，终于看到一点点成功了。有没有一点小兴奋呢？下一章我们将完全的实现对屏幕的字符输出控制，并且有机会\allowbreak
 的话我将把这个小内核运行在物理机上，和大家一起体验一下物理机运行的感觉。
