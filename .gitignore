@@ -18,6 +18,7 @@
 *.app
 hx_kernel
 src/floppy.img
+.clang_complete
 
 # XeLaTex
 *.aux
