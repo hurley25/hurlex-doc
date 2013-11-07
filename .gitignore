@@ -19,6 +19,7 @@
 hx_kernel
 src/floppy.img
 .clang_complete
+tags
 
 # XeLaTex
 *.aux

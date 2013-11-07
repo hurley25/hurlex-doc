@@ -58,6 +58,7 @@ start:
 	cli  				; 此时还没有设置好保护模式的中断处理，所以必须关闭中断
 	mov [glb_mboot_ptr], ebx	; 将 ebx 中存储的指针存入 glb_mboot_ptr 变量
 	mov esp, STACK_TOP  		; 设置内核栈地址，按照 multiboot 规范，当需要使用堆栈时，OS映象必须自己创建一个
+	and esp, 0FFFFFFF0H		; 栈地址按照16字节对齐
 	mov ebp, 0 			; 帧指针修改为 0
     
 	call kern_entry	; 调用内核入口函数

@@ -78,7 +78,8 @@ inline void bzero(void *dest, uint32_t len)
 的做法，提供同样的接口。printf的用法大家很清楚，首先是一个待显示的字符串，里面分别用\%加相关字母的方式一一指明了后面的参数\allowbreak
 数量和类型。只要我们传递正确的带有格式描述的字符串和相关参数，printf函数就能正确的打印出来结果。
 
-\par 我们的printk函数的实现完全模仿printf函数的接口，首先是函数声明：
+\par 我们的printk函数的实现完全模仿printf函数的接口，首先是函数声明：\allowbreak
+\footnote{这里的debug.h是一部分，后面给出完整的debug.h的代码。}
 
 \begin{lstlisting}[language = C, label = include/debug.h, caption = include/debug.h]
 #include "console.h"
@@ -448,13 +449,215 @@ elf\_section\_header\_t类型的结构体数组，num成员是这个结构体数
 
 \par 这里的代码可能让大家一下子有点蒙，如果你觉得无从下手的话不妨在纸上画一画这几个结构体的关系图，这能帮助你理解。\allowbreak
 对于这里的代码大家不必过于深究，毕竟ELF格式只是Linux平台下的一种可执行格式，而本文档的目的是想让大家建立对项目的\allowbreak
-整体把握，细节问题就留给大家自己去理解吧。
+整体把握，细节问题就留给大家自己去理解吧。\footnote{objdump和readelf等工具是探索ELF格式的利器，它们同属GNU binutils工具包的一部分。}
 
 \par 通过以上的努力，我们获取了ELF文件中关于每个函数的名称和它们代码的区域，那么此时如何使用这些信息寻找函数名称呢？\allowbreak
 其实大家从elf\_lookup\_symbol函数的实现里就能看出来。我们提供了一个地址，然后查询这个地址在哪个函数的代码区间里，然后\allowbreak
 返回了这个函数名的字符串指针。
 
-\par 终于到了最后的函数调用栈问题了，这也是我们最终的打印调用栈函数panic的实现原理。
+\par 终于到了最后的函数调用栈问题了，这也是最终的打印调用栈函数panic的实现原理。
 
-%\begin{lstlisting}[language = C, label = include/multiboot.h, caption = include/multiboot.h]
-%\end{lstlisting}
+\par 我们利用objdump文件反汇编生成的hx\_kernel文件，找到入口函数的代码结合start函数的实现一起分析。反汇编的指令如下：
+
+\begin{Verbatim}[frame=single]
+  objdump -M intel -d hx_kernel
+\end{Verbatim}
+
+\par -M intel 参数是生成Intel风格的汇编，想必大家对Intel风格的汇编更熟悉吧。这个命令会反汇编所有的函数，我们找到start函数\allowbreak
+和kern\_entry函数的反汇编代码如下：
+
+\begin{lstlisting}[language = {[x86masm]Assembler}, label = 入口函数反汇编, caption = 入口函数反汇编]
+0010000c <start>:
+  10000c:	fa                   	cli    
+  10000d:	89 1d 00 b0 10 00    	mov    DWORD PTR ds:0x10b000,ebx
+  100013:	bc 03 80 00 00       	mov    esp,0x8003
+  100018:	83 e4 f0             	and    esp,0xfffffff0
+  10001b:	bd 00 00 00 00       	mov    ebp,0x0
+  100020:	e8 af 0a 00 00       	call   100ad4 <kern_entry>
+00100025 <stop>:
+  100025:	f4                   	hlt    
+  100026:	eb fd                	jmp    100025 <stop>
+
+00100ad4 <kern_entry>:
+  100ad4:	55                   	push   ebp
+  100ad5:	89 e5                	mov    ebp,esp
+  100ad7:	83 ec 18             	sub    esp,0x16
+  100ada:	e8 39 01 00 00       	call   100c18 <console_clear>
+  100adf:	c7 44 24 08 9b 21 10 	mov    DWORD PTR [esp+0x8],0x10219b
+  100ae6:	00 
+  100ae7:	c7 44 24 04 02 00 00 	mov    DWORD PTR [esp+0x4],0x2
+  100aee:	00 
+  100aef:	c7 04 24 00 00 00 00 	mov    DWORD PTR [esp],0x0
+  100af6:	e8 33 f7 ff ff       	call   10022e <printk_color>
+  100afb:	b8 00 00 00 00       	mov    eax,0x0
+  100b00:	c9                   	leave  
+  100b01:	c3                   	ret    
+\end{lstlisting}
+
+\par 我们从start函数开始分析。首先第2行是关闭中断，因为此时尚未设置中断相关的一些数据结构，如果发生了中断的话就会崩溃。\allowbreak
+接下来第3行是我们把ebx寄存器中存储的multiboot\_t结构的指针传给了全局变量glb\_mboot\_ptr，接着4、5行分别是初始化内核栈的栈顶\allowbreak
+指针，第5行与运算的目的是使得栈地址按照16字节对齐，这样的效率比较好。随后start函数调用了内核入口kern\_entry函数。大家注意\allowbreak
+这里的call指令实际上做了两件事情，第一件事情是将call指令随后的地址压入栈，然后跳转到kern\_entry函数的起始地址那里去。也就是\allowbreak
+说这里的call 100ad4 <kern\_entry>等价于以下两条指令：
+
+\begin{Verbatim}[frame=single]
+  push 100022
+  jmp 100ad4
+\end{Verbatim}
+
+\par 我们这里碰巧有个stop的标号在这里，所以nasm处理成stop函数了。其实所有的函数在代码段里都是连续的，无论跳转到哪里，\allowbreak
+都会从哪里开始执行的。现在大家思考这样一个问题，为什么要保存call指令的下一条指令的地址到栈里呢？其实很简单，因为子函数\allowbreak
+调用完会返回，不保存返回的地址的话怎么知道该往哪里返回呢。
+
+\par 我们继续往下看，kern\_entry函数一开始就把ebp寄存器压栈，然后将esp赋给ebp寄存器。为什么要先压栈呢？\allowbreak
+因为在一个CPU核里所有的寄存器都只有一份，当执行流程从一个函数跳转到另外一个函数的时候，之前的寄存器可能保存着重要的信息。\allowbreak
+如果我们不保护之前的执行现场，当子函数执行完返回的时候就会出问题。那这么多寄存器全都要保存吗？当然不是，x86的规则是这样的：\allowbreak
+寄存器分为调用者保存寄存器和被调用者保存寄存器。按照惯例，eax，edx，ecx寄存器是调用者保存，ebx，esi，edi，ebp等寄存器是被调\allowbreak
+用者负责保存。举个例子，一个函数想使用ebx寄存器那么必须在返回前恢复ebp原先的值，而使用edx寄存器就无需暂存和恢复。如果我们只用\allowbreak
+C语言编程的话自然无需关注这些，因为编译器会替我们打点这一切。但是如果要实现汇编和C语言的混合编程的话，就要留心这些了。
+
+\par 我们回到正题。第16行的汇编指令实际上是开辟函数局部变量的操作，不过这个函数没有用到。接着又是一个函数调用，同理，压入当前\allowbreak
+指令之后一条指令的地址，然后跳转过去执行，而且之后所有的函数调用基本上都是按照这个套路进行的。当函数执行完之后，函数清理开辟的\allowbreak
+局部变量的空间，恢复在栈里保存的ebp寄存器，弹出返回地址跳转回去。这就是函数执行和返回的一个大致的流程。所以当一个函数遇到了\allowbreak
+错误的时候，我们就可以调用一个打印当前栈里的函数调用链的函数来帮助我们调试。原理很简单，所有函数的返回地址都保存在栈里，我们\allowbreak
+结合之前获取到的所有函数的名称和它们的地址区间，只要查找到这个返回地址在哪一个函数的地址区间里，就能知道之前调用的函数了。\allowbreak
+而这个查找函数我们已经实现了。
+
+\par 不知道我刚刚的描述大家理解了没有？如果还有点迷糊的话来看下面的这张图片，这是按照上文的描述给出的函数调用函数栈的示意图。\allowbreak
+不过需要注意的是，所有的地址是根据我自己机器上生成的汇编地址绘制的。大家可能会有不一样的地址，但是原理是一致的。
+
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.55]{picture/chapt5/os_function_stack.png}
+      \caption{内核函数调用栈}
+\end{figure}
+
+\par 在示意图中我们假设从start函数->kern\_entry函数->console\_clear函数的调用过程，最终暂停在console\_clear函数里面。\allowbreak
+我们可以清楚的看到，只要拿到此时的ebp寄存器的值，就可以沿着这个调用链找到每一个调用的函数的返回地址，之前的问题就这样\allowbreak
+解决了。需要注意的是C语言里对指针做算数运算时，改变的地址长度是和当前指针变量的类型相关的。
+
+\par 我们分别给出最终的打印函数调用信息的panic函数的声明和实现。顺带还有几个调试使用的宏，都很简单：
+
+\begin{lstlisting}[language = C, label = include/debug.h, caption = debug/debug.h]
+#ifndef INCLUDE_DEBUG_H_
+#define INCLUDE_DEBUG_H_
+
+#include "console.h"
+#include "vargs.h"
+#include "elf.h"
+
+#define assert(x)                                       	\
+	do {                                                	\
+		if (!(x)) {                                     \
+			panic("assertion failed: %s", #x);      \
+		}                                               \
+	} while (0)
+
+// 编译期间静态检测
+#define static_assert(x)                                	\
+	switch (x) { case 0: case (x): ; }
+
+// 初始化 Debug 信息
+void init_debug();
+
+// 打印当前的函数调用栈信息
+void panic(const char *msg);
+
+// 打印当前的段存器值
+void print_cur_status();
+
+// 内核的打印函数
+void printk(const char *format, ...);
+
+// 内核的打印函数 带颜色
+void printk_color(real_color_t back, real_color_t fore, const char *format, ...);
+
+#endif 	// INCLUDE_DEBUG_H_
+\end{lstlisting}
+
+\par 这里已经是debug.h头文件的完整的内容了，具体的几个实现函数一并在下面列出。
+
+\begin{lstlisting}[language = C, label = kernel/debug/debug.c, caption = kernel/debug/debug.c]
+#include "debug.h"
+
+static void print_stack_trace();
+static elf_t kernel_elf;
+
+void init_debug()
+{
+	// 从 GRUB 提供的信息中获取到内核符号表和代码地址信息
+	kernel_elf = elf_from_multiboot(glb_mboot_ptr);
+}
+
+void print_cur_status()
+{
+	static int round = 0;
+	uint16_t reg1, reg2, reg3, reg4;
+
+	asm volatile ( 	"mov %%cs, %0;"
+			"mov %%ds, %1;"
+			"mov %%es, %2;"
+			"mov %%ss, %3;"
+			: "=m"(reg1), "=m"(reg2), "=m"(reg3), "=m"(reg4));
+
+	// 打印当前的运行级别
+	printk("%d: @ring %d\n", round, reg1 & 0x3);
+	printk("%d:  cs = %x\n", round, reg1);
+	printk("%d:  ds = %x\n", round, reg2);
+	printk("%d:  es = %x\n", round, reg3);
+	printk("%d:  ss = %x\n", round, reg4);
+	++round;
+}
+
+void panic(const char *msg)
+{
+	printk("*** System panic: %s\n", msg);
+	print_stack_trace();
+	printk("***\n");
+	
+	// 致命错误发生后打印栈信息后停止在这里
+	while(1);
+}
+
+void print_stack_trace()
+{
+	uint32_t *ebp, *eip;
+
+	asm volatile ("mov %%ebp, %0" : "=r" (ebp));
+	while (ebp) {
+		eip = ebp + 1;
+		printk("   [0x%x] %s\n", *eip, elf_lookup_symbol(*eip, &kernel_elf));
+		ebp = (uint32_t*)*ebp;
+	}
+}
+\end{lstlisting}
+
+\par 至此，本章要阐述的内容到此结束。我们整合所有代码，如下修改entry函数并编译运行测试一下这个打印函数调用栈的函数。
+
+\begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
+#include "console.h"
+#include "debug.h"
+
+int kern_entry()
+{
+	init_debug();
+
+	console_clear();
+
+	printk_color(rc_black, rc_green, "Hello, OS kernel!\n");
+
+	panic("test");
+
+	return 0;
+}
+\end{lstlisting}
+
+\par 运行结果如图：
+
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.4]{picture/chapt5/os_panic.png}
+      \caption{panic 函数测试图}
+\end{figure}
+
+\par 看起来这章似乎没有什么实质性的进展，但是调试功能的添加和基础库的建立会给我们后面的开发带来很多好处。本章就到这里，下章再见。
