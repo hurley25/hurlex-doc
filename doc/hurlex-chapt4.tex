@@ -66,7 +66,7 @@
 \par 在具体的设置之前，我们首先需要几个端口读写函数的实现。因为C语言并没有直接操作端口的方法，而且频繁的内联汇编麻烦又容易\allowbreak
 出错。所以好的做法就是定义几个端口读写函数。代码如下：
 
-\begin{lstlisting}[language = C, label = libs/common.c, caption = libs/common.c]
+\begin{lstlisting}[language = C, caption = libs/common.c]
 #include "common.h"
 
 // 端口写一个字节
@@ -97,7 +97,7 @@ inline uint16_t inw(uint16_t port)
 \end{lstlisting}
 
 \par 对应的头文件如下：
-\begin{lstlisting}[language = C, label = include/common.h, caption = include/common.h]
+\begin{lstlisting}[language = C, caption = include/common.h]
 #ifndef INCLUDE_COMMON_H_
 #define INCLUDE_COMMON_H_
 
@@ -123,7 +123,7 @@ uint16_t inw(uint16_t port);
 \subsection{颜色的枚举定义和屏幕操作函数的实现}
 
 \par 接下来是颜色定义的枚举和一些屏幕控制函数的声明。代码如下：
-\begin{lstlisting}[language = C, label = include/console.h, caption = include/console.h]
+\begin{lstlisting}[language = C, caption = include/console.h]
 #ifndef INCLUDE_CONSOLE_H_
 #define INCLUDE_CONSOLE_H_
 
@@ -173,7 +173,7 @@ void console_write_dec(uint32_t n, real_color_t back, real_color_t fore);
 \par 参照着前面的表格，理解颜色的枚举类型并不困难。接下来是显存起始位置和当前输出的屏幕位置的变量定义。同时，我们将屏幕\allowbreak
 抽象为一个80*25的二维数组，每个数组成员都是2个字节，表示屏幕上显示的一个字符。
 
-\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+\begin{lstlisting}[language = C, caption = drivers/console.c]
 // VGA 的显示缓冲的起点是 0xB8000
 static uint16_t *video_memory = (uint16_t *)0xB8000;
 
@@ -190,7 +190,7 @@ static uint8_t cursor_y = 0;
 \par 在本模块内，cursor\_x 和 cursor\_y 这两个变量指明了逻辑上的当前输出位置，但是并没有实际上移动硬件的显示"光标"，\allowbreak
 下面的函数实现了根据这两个变量的值移动光标的功能。
 
-\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+\begin{lstlisting}[language = C, caption = drivers/console.c]
 static void move_cursor()
 {
 	// 屏幕是 80 字节宽
@@ -214,7 +214,7 @@ static void move_cursor()
 \par 然后是清屏操作，其实这里的"清屏"很简单，其实就是用白底黑字的"空格符"覆盖整个屏幕的显示区域罢了。这么做自然就实现了\allowbreak
 我们想要的"清屏"操作了。代码很简单：
 
-\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+\begin{lstlisting}[language = C, caption = drivers/console.c]
 void console_clear()
 {
 	uint8_t attribute_byte = (0 << 4) | (15 & 0x0F);
@@ -235,7 +235,7 @@ void console_clear()
 
 \par 那么屏幕滚动呢？用C语言来描述实际上就是将后24行的数据全部向上挪动一行，最后一行清空罢了，就是这么简单。
 
-\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+\begin{lstlisting}[language = C, caption = drivers/console.c]
 static void scroll()
 {
 	// attribute_byte 被构造出一个黑底白字的描述格式
@@ -266,7 +266,7 @@ static void scroll()
 
 \par 那么屏幕显示字符串呢？我们可以先实现屏幕显示一个字符的函数，那么屏幕显示一个字符串不就可以了么。这几个函数的实现如下：
 
-\begin{lstlisting}[language = C, label = drivers/console.c, caption = drivers/console.c]
+\begin{lstlisting}[language = C, caption = drivers/console.c]
 void console_putc_color(char c, real_color_t back, real_color_t fore)
 {
 	uint8_t back_color = (uint8_t)back;
@@ -327,7 +327,7 @@ void console_write_color(char *cstr, real_color_t back, real_color_t fore)
 
 \par 屏幕的操作到这里就告一段落了，我们修改下初始化函数，感受一下今天的成果吧。
 
-\begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
+\begin{lstlisting}[language = C, caption = init/entry.c]
 #include "console.h"
 
 int kern_entry(multiboot_t *mboot_ptr)

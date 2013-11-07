@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  entry.c
+ *       Filename:  common.h
  *
- *    Description:  hurlex 内核的入口函数
+ *    Description:  一些类型的定义
  *
  *        Version:  1.0
- *        Created:  2013年10月31日 13时31分03秒
+ *        Created:  2013年11月01日 10时07分26秒
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -16,18 +16,18 @@
  * =====================================================================================
  */
 
-#include "gdt.h"
-#include "console.h"
-#include "debug.h"
+#ifndef INCLUDE_COMMON_H_
+#define INCLUDE_COMMON_H_
 
-int kern_entry()
-{
-	init_debug();
-	init_gdt();
+#include "types.h"
 
-	console_clear();
-	printk_color(rc_black, rc_green, "Hello, OS kernel!\n");
+// 端口写一个字节
+void outb(uint16_t port, uint8_t value);
 
-	return 0;
-}
+// 端口读一个字节
+uint8_t inb(uint16_t port);
 
+// 端口读一个字
+uint16_t inw(uint16_t port);
+
+#endif // INCLUDE_COMMON_H_

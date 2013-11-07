@@ -99,7 +99,7 @@ qemu 的安装方法很简单，以Fedora为例，只需执行以下命令即可
 也可以参考Makefile或者gcc的手册，这些在网上都很容易检索到。}
 \footnote{这个Makefile很简单而且颇具启发意义。只要简单修改一些参数就可以在其他项目里使用了。}
 
-\begin{lstlisting}[language = sh, label = Makefile, caption = Makefile]
+\begin{lstlisting}[language = sh, caption = Makefile]
 #!Makefile
 
 C_SOURCES = $(shell find . -name "*.c")
@@ -167,7 +167,7 @@ debug:
 \subsubsection{kernel.ld}
 \par 接下来是项目初步采用的链接器脚本的定义。
 
-\begin{lstlisting}[label = script/kernel.ld, caption = script/kernel.ld]
+\begin{lstlisting}[caption = script/kernel.ld]
 /*
  *      kernel.ld -- 针对 kernel 格式所写的链接脚本
  */
@@ -233,7 +233,7 @@ Linux下进程的线性地址空间的文章可以供你参考，地址是：htt
 \footnote{使用qemu的用户是不是很疑惑，怎么没有qemu虚拟机的配置文件呢？嘿嘿，仔细读Makefile，它已经包含\allowbreak
 在Makefile里了，也就是几个命令行参数，简单吧？}
 
-\begin{lstlisting}
+\begin{lstlisting}[caption = Bochs 的配置文件]
 # ------------------------------------------------------------
 # Bochs 配置文件
 #

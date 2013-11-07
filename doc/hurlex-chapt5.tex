@@ -14,7 +14,7 @@
 
 \par 首先给出函数的声明：
 
-\begin{lstlisting}[language = C, label = include/string.h, caption = include/string.h]
+\begin{lstlisting}[language = C, caption = include/string.h]
 #ifndef INCLUDE_STRING_H_
 #define INCLUDE_STRING_H_
 
@@ -40,7 +40,7 @@ int strlen(const char *src);
 \par 至于函数的实现我只给出其中几个函数的参考实现，剩下的请大家自己实现吧，考验大家C语言指针基本功的时候到了。\allowbreak
 \footnote{友情提醒，这里的函数最好在用户态下进行编码和测试，确认正确无误了再放入内核中使用。}
 
-\begin{lstlisting}[language = C, label = libs/string.c, caption = libs/string.c]
+\begin{lstlisting}[language = C, caption = libs/string.c]
 #include "string.h"
 
 inline void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len)
@@ -81,7 +81,7 @@ inline void bzero(void *dest, uint32_t len)
 \par 我们的printk函数的实现完全模仿printf函数的接口，首先是函数声明：\allowbreak
 \footnote{这里的debug.h是一部分，后面给出完整的debug.h的代码。}
 
-\begin{lstlisting}[language = C, label = include/debug.h, caption = include/debug.h]
+\begin{lstlisting}[language = C, caption = include/debug.h]
 #include "console.h"
 #include "vargs.h"
 
@@ -99,7 +99,7 @@ void printk_color(real_color_t back, real_color_t fore, const char *format, ...)
 
 \par 我们先贴出另一个所需要的头文件 vargs.h 的内容：
 
-\begin{lstlisting}[language = C, label = include/vargs.h, caption = include/vargs.h]
+\begin{lstlisting}[language = C, caption = include/vargs.h]
 #ifndef INCLUDE_VARGS_H_
 #define INCLUDE_VARGS_H_
 
@@ -118,7 +118,7 @@ typedef __builtin_va_list va_list;
 \footnote{注意这里是简化版的定义，事实上出于x86压栈元素长度的限制和优化的考虑，小于等于4字节的类型统一扩展到4字节压栈。大于\allowbreak
 4字节小于等于8字节的类型统一以8字节压栈（另外32位压栈指令的操作数只能是16位或者32位的）。}
 
-\begin{lstlisting}[language = C, label = 可变形参表, caption = 可变形参表]
+\begin{lstlisting}[language = C, caption = 可变形参表]
 #define  va_list              char *
 
 #define  va_start(p, first)   (p = (va_list)&first + sizeof(first))
@@ -134,7 +134,7 @@ typedef __builtin_va_list va_list;
 调用约定就是cdecl了，cdecl约定规定由调用者从右向左向栈里连续的压入参数，在函数返回之后，再清理掉压入的参数以保证堆栈平衡。\allowbreak
 对于类似于 func(1, 2, 3, 4); 这样的函数调用编译后生成的汇编代码类似下面这样：
 
-\begin{lstlisting}[language = {[x86masm]Assembler}, label = 函数调用, caption = 函数调用]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = 函数调用]
 	push 4
 	push 3
 	push 2
@@ -243,7 +243,7 @@ typedef __builtin_va_list va_list;
 multiboot\_t类型结构体的指针，这个结构体存储了GRUB在调用内核前获取的硬件信息和内核文件本身的一些信息。我们先给出具体\allowbreak
 的结构体的定义如下：
 
-\begin{lstlisting}[language = C, label = include/multiboot.h, caption = include/multiboot.h]
+\begin{lstlisting}[language = C, caption = include/multiboot.h]
 #ifndef INCLUDE_MULTIBOOT_H_
 #define INCLUDE_MULTIBOOT_H_
 
@@ -323,7 +323,7 @@ extern multiboot_t *glb_mboot_ptr;
 \par 结构体中有很多注释，大家结合具体的协议文档很容易就可以看懂。我们暂时需要关心的主要是符号表，其它的信息我们之后\allowbreak
 用到的时候再讨论。也就是说，我们暂时只关注结构体中以下几个字段的内容即可：
 
-\begin{lstlisting}[language = C, label = include/multiboot.h, caption = include/multiboot.h]
+\begin{lstlisting}[language = C, caption = include/multiboot.h]
 	......
 	/**
 	 * ELF 格式内核映像的 section 头表。
@@ -339,7 +339,7 @@ extern multiboot_t *glb_mboot_ptr;
 要理解下面的内容还真有些困难，因为它涉及的面太广了。我们先以ELF的文件格式做为切入点。我们先添加\allowbreak
 elf.h这个头文件：
 
-\begin{lstlisting}[language = C, label = include/elf.h, caption = include/elf.h]
+\begin{lstlisting}[language = C, caption = include/elf.h]
 #ifndef INCLUDE_ELF_H_
 #define INCLUDE_ELF_H_
 
@@ -394,7 +394,7 @@ const char *elf_lookup_symbol(uint32_t addr, elf_t *elf);
 
 \par 这段结构体定义里包含了ELF文件的区段头、符号表等信息。我们给出从multiboot\_t结构中提取出ELF相关信息的代码：
 
-\begin{lstlisting}[language = C, label = kernel/debug/elf.c, caption = kernel/debug/elf.c]
+\begin{lstlisting}[language = C, caption = kernel/debug/elf.c]
 #include "common.h"
 #include "string.h"
 #include "elf.h"
@@ -466,7 +466,7 @@ elf\_section\_header\_t类型的结构体数组，num成员是这个结构体数
 \par -M intel 参数是生成Intel风格的汇编，想必大家对Intel风格的汇编更熟悉吧。这个命令会反汇编所有的函数，我们找到start函数\allowbreak
 和kern\_entry函数的反汇编代码如下：
 
-\begin{lstlisting}[language = {[x86masm]Assembler}, label = 入口函数反汇编, caption = 入口函数反汇编]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = 入口函数反汇编]
 0010000c <start>:
   10000c:	fa                   	cli    
   10000d:	89 1d 00 b0 10 00    	mov    DWORD PTR ds:0x10b000,ebx
@@ -528,7 +528,7 @@ C语言编程的话自然无需关注这些，因为编译器会替我们打点�
 
 \begin{figure}[ht]
       \centering
-      \includegraphics[scale=0.55]{picture/chapt5/os_function_stack.png}
+      \includegraphics[scale=0.5]{picture/chapt5/os_function_stack.png}
       \caption{内核函数调用栈}
 \end{figure}
 
@@ -538,7 +538,7 @@ C语言编程的话自然无需关注这些，因为编译器会替我们打点�
 
 \par 我们分别给出最终的打印函数调用信息的panic函数的声明和实现。顺带还有几个调试使用的宏，都很简单：
 
-\begin{lstlisting}[language = C, label = include/debug.h, caption = debug/debug.h]
+\begin{lstlisting}[language = C, caption = debug/debug.h]
 #ifndef INCLUDE_DEBUG_H_
 #define INCLUDE_DEBUG_H_
 
@@ -577,7 +577,7 @@ void printk_color(real_color_t back, real_color_t fore, const char *format, ...)
 
 \par 这里已经是debug.h头文件的完整的内容了，具体的几个实现函数一并在下面列出。
 
-\begin{lstlisting}[language = C, label = kernel/debug/debug.c, caption = kernel/debug/debug.c]
+\begin{lstlisting}[language = C, caption = kernel/debug/debug.c]
 #include "debug.h"
 
 static void print_stack_trace();
@@ -634,7 +634,7 @@ void print_stack_trace()
 
 \par 至此，本章要阐述的内容到此结束。我们整合所有代码，如下修改entry函数并编译运行测试一下这个打印函数调用栈的函数。
 
-\begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
+\begin{lstlisting}[language = C, caption = init/entry.c]
 #include "console.h"
 #include "debug.h"
 

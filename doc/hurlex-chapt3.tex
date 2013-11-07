@@ -108,7 +108,7 @@ GRUB支持从很多常见的文件系统中去读取和载入内核文件，当�
 
 \par 大家先来一起围观下入口部分的代码全貌:
 
-\begin{lstlisting}[language = {[x86masm]Assembler}, label = boot/boot.s, caption = boot/boot.s]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = boot/boot.s]
 ; ----------------------------------------------------------------
 ;
 ; 	boot.s -- 内核从这里开始
@@ -193,7 +193,7 @@ start了，入口代码很短，主要做的是关闭中断，传参数(按照�
 
 \par OK，理解了上面这两段代码，我们暂时的告别汇编，用C语言来实现内核的入口函数。
 
-\begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
+\begin{lstlisting}[language = C, caption = init/entry.c]
 int kern_entry()
 {
 	return 0;
@@ -202,7 +202,7 @@ int kern_entry()
 
 \par 还有一个在后面需要用到的头文件，主要是几个宏和一些类型的重定义。代码如下:
 
-\begin{lstlisting}[language = C, label = include/types.h, caption = include/types.h]
+\begin{lstlisting}[language = C, caption = include/types.h]
 #ifndef INCLUDE_TYPES_H_
 #define INCLUDE_TYPES_H_
 
@@ -272,7 +272,7 @@ typedef          char  int8_t;
 \par 有点失望是不是？别急，下一章过后，我们就可以自如的在屏幕上显示字符了。有点迫不及待了？那我就先透露一点吧，\allowbreak
 按照如下代码修改kern\_entry函数:
 
-\begin{lstlisting}[language = C, label = init/entry.c, caption = init/entry.c]
+\begin{lstlisting}[language = C, caption = init/entry.c]
 #include "types.h"
 
 int kern_entry()
