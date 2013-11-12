@@ -87,6 +87,14 @@ System Programming Guide》，下文不再声明。}
 不过此时它们改名字了，叫段选择器（段选择子）。此时的CS等寄存器不再保存段基址了，而是保存其指向段的索引信息，CPU会根据\allowbreak
 这些信息在内存中获取到段信息。
 
+\par 地址合成的过程如下图所示：
+
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.5]{picture/chapt6/protected_segment_addr.png}
+      \caption{段机制的地址合成过程}
+\end{figure}
+
 \par 以上就是对x86保护模式的阐述了，细节问题希望大家能结合之后的代码自行参考Intel文档学习。
 
 \subsection{具体采用的分段策略}
