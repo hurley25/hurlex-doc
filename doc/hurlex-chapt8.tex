@@ -15,7 +15,7 @@
 \par 8259A PIC每一片可以管理8个中断源，显然一般情况下设备数量会超过这个值。这里就要提到IBM PC/AT 8259A PIC架构了，IBM的设计方案\allowbreak
 是使用8259APIC的级联功能，使用两片级联（分为主、从片）的方式来管理硬件中断。其中主片的INT端连接到CPU的INTR引脚，从片的INT连接到\allowbreak
 主片的IR2引脚。结构如下图所示：
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.5]{picture/chapt8/8259A_PIC.png}
       \caption{8259A PIC级联}

@@ -48,7 +48,7 @@ CPU从中断控制器处得知了中断号，根据这个中断号找到对应�
 这里很类似GDT的那一套过程，我们先给出中断描述符表的结构：\allowbreak
 \footnote{照例引用Intel文档中的插图，这是一篇开源的文档，应该没有版权纠纷吧...}
 
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.5]{picture/chapt7/interrupt_gate.png}
       \caption{中断描述符的格式}
@@ -108,7 +108,7 @@ struct idt_ptr_t {
 这一步需要通过软件完成，即要求相关的中断处理函数在使用iret指令返回之前添加出栈代码主动弹出错误代码。
 
 \par 下图描述了CPU自动保护和恢复的寄存器的栈结构：
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.4]{picture/chapt7/interrupt_stack.png}
       \caption{中断发生时CPU保存的现场}
@@ -439,7 +439,7 @@ int kern_entry()
 \end{lstlisting}
 
 \par 编译运行，我们得要了正确的结果：\footnote{当然了，我们没有注册具体的处理函数，所以就打印默认的信息了。}
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.5]{picture/chapt7/interrupt_view.png}
       \caption{中断处理函数的测试}

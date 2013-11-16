@@ -11,7 +11,7 @@
 \par 在第二章我们简单的谈过地址空间的概念，并提到4G的地址空间并非全部指向主存储器，而是有部分的地址分给了其他外设。\allowbreak
 特别地，在地址空间的最低1MB处，有很多地址是属于外部设备的，下图描绘了该处地址映射的分布情况：
 
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.65]{picture/chapt4/BIOS-mem.png}
       \caption{低端地址空间的映射关系}
@@ -40,7 +40,7 @@
 每2个字节表示屏幕上显示的一个字符。从屏幕的第一行开始对应，一行接着一行的对应下去。而这两个字节的前一个是显示字符的ASCII码，\allowbreak
 后一个是控制这个字符颜色和属性的控制信息，这个字节的8个bit位表示不同的含义。每一位的含义如图所示：
 
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.25]{picture/chapt4/char_color.png}
       \caption{字符属性示意图}
@@ -48,7 +48,7 @@
 
 \par 这些位的组合效果如下图所示：
 
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.4]{picture/chapt4/text_mode_color.png}
       \caption{显卡文本模式的颜色表}
@@ -342,7 +342,7 @@ int kern_entry(multiboot_t *mboot_ptr)
 
 \par 编译运行，干净的屏幕上出现了我们绿色的文字，还有下一行闪烁着的输入光标。
 
-\begin{figure}[ht]
+\begin{figure}[H]
       \centering
       \includegraphics[scale=0.5]{picture/chapt4/hello_os_world_green.png}
       \caption{屏幕输出控制的展示}
