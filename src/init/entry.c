@@ -21,6 +21,7 @@
 #include "gdt.h"
 #include "idt.h"
 #include "timer.h"
+#include "pmm.h"
 
 int kern_entry()
 {
@@ -29,12 +30,23 @@ int kern_entry()
 	init_idt();
 
 	console_clear();
-	printk_color(rc_black, rc_green, "Hello, OS kernel!\n");
+	printk_color(rc_black, rc_green, "Hello, OS kernel!\n\n");
 
 	init_timer(200);
 
 	// 开启中断
-	asm volatile ("sti");
+	// asm volatile ("sti");
+	init_pmm();
+
+	printk("kernel in memory start: 0x%08X\n", kern_start);
+	printk("kernel in memory end:   0x%08X\n", kern_end);
+	printk("kernel in memory used:   %d KB\n\n", (kern_end - kern_start) / 1024);
+
+	printk("alloc phy page in: 0x%X\n", pmm_alloc_page());
+	printk("alloc phy page in: 0x%X\n", pmm_alloc_page());
+	printk("alloc phy page in: 0x%X\n", pmm_alloc_page());
+	printk("alloc phy page in: 0x%X\n", pmm_alloc_page());
+	printk("alloc phy page in: 0x%X\n", pmm_alloc_page());
 
 	return 0;
 }

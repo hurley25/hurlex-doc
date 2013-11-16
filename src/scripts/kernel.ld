@@ -27,8 +27,9 @@
 ENTRY(start)
 SECTIONS
 {
-	.text 0x100000 :
+	.text 0x100000:
 	{
+		PROVIDE( kern_start = . );
 		code = .; _code = .; __code = .;
 		*(.text)
 		. = ALIGN(4096);
@@ -61,6 +62,7 @@ SECTIONS
 		stabstr = .; _stabstr = .; __stabstr = .;
 		*(.stabstr)
 	 	. = ALIGN(4096);
+		PROVIDE( kern_end = . );
 	}
 	
 	end = .; _end = .; __end = .;
