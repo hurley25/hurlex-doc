@@ -41,6 +41,7 @@
 上的小内核。不过千里之行，始于足下。一时的胆怯会在我们逐渐获得的一点点成就感中丧失殆尽。同时我也会尽量降低这个小内核的\allowbreak
 难度，给充满热情但相关基础较为薄弱的读者阐述尽可能多的背景资料和原理解析（至少也会给出参考资料的链接）。我相信哪怕\allowbreak
 你之前的基础再弱，至少也能"照猫画虎"的构建出一个可以在裸机上运行的小内核。
+
 \par 相信这个体验会对你以后的学习生涯带来很多难以估量的\allowbreak
 好处。当你在学习计算机原理的时候，你对计算机的理解将不再是浅浅的浮于表面的概括，而是深刻的掌握了机器运行的基本原理。\allowbreak
 那些看似枯燥的理论和概念在你的眼里将是鲜活且富有生机的。相比较一般的用户只是使用计算机而言，我们却在自己的机器上写出\allowbreak
@@ -65,6 +66,7 @@
 重启和关机都是虚拟的，不需要重启宿主机。而且虚拟机里运行的程序不会对宿主机造成影响\allowbreak
 \footnote{至少我还从来没见过可以穿透虚拟机而损坏到宿主机的程序，而且以我目前的水平肯定写不出来，大家尽管放心。:) }
 ，所以大家可以放心的编写代码而不必担心对自己的机器造成损坏。
+
 \par 不过我们这次使用的不是大多数读者熟悉的Vmware或者Virtual Box，而是一款叫做qemu\allowbreak
 的虚拟机。为什么呢？因为有调试的需要。我们需要一个能调试其上运行着的操作系统的虚拟机，而qemu是个不错的选择。\allowbreak
 也许你听过另一款叫做bochs的虚拟机也支持调试，但这次不选择bochs。因为各大Linux发行版软件源里的bochs默认是不带有\allowbreak
@@ -198,6 +200,20 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 
+	.stab :
+	{
+		stab = .; _stab = .; __stab = .;
+		*(.stab)
+		. = ALIGN(4096);
+	}
+	
+	.stabstr :
+	{
+		stabstr = .; _stabstr = .; __stabstr = .;
+		*(.stabstr)
+	 	. = ALIGN(4096);
+	}
+	
 	end = .; _end = .; __end = .;
 
 	/DISCARD/ : { *(.comment) *(.eh_frame) }
@@ -205,17 +221,22 @@ SECTIONS
 \end{lstlisting}
  
 \par 这个脚本告诉ld程序如何构造我们所需的内核映像文件。
+
 \par 首先，脚本声明了内核程序的入口地址是符号 "start" 。然后声明了第一个段.text段（代码段）\allowbreak
 以及它的起始地址0x100000（1MB）。接着是已初始化数据段.data和未初始化数据段.bss以及它们采用的4096的\allowbreak
 页对齐方式。Linux GCC 增加了额外的数据段.rodata，这是一个只读的已初始化数据段，放置常量什么的。\allowbreak
-另外为了简单起见，我们把.rodata段和.data段放在了一起。
+另外为了简单起见，我们把.rodata段和.data段放在了一起。最后的stab和stabstr段暂时无需关注，等到后\allowbreak
+面讲到调试信息的时候就会明白。
+
 \par 如果你对这里的ld链接器的脚本不是很理解也不是很重要，只要理解了脚本表示的意思就好。
 \footnote{如果你对编译和链接的过程所知甚少的话，那么我厚脸推荐你我的博客看两篇文章。分别是\allowbreak
 《编译和链接的那些事》(上/下) 地址是：http://toqianmo.sinaapp.com/?p=323 和 \allowbreak
 http://toqianmo.sinaapp.com/?p=357}
 \footnote{如果你对进程的地址空间不是很熟悉的话，建议你先去Google上检索相关的资料，我的博客也有一篇讲解\allowbreak
 Linux下进程的线性地址空间的文章可以供你参考，地址是：http://toqianmo.sinaapp.com/?p=397}
+
 \par 我们所用到的脚本暂时就是这两个，随着项目的逐渐展开，还会有陆续的代码加进来。
+
 \par 我目前的目录结构是这样的：
 \begin{Verbatim}[frame=single]
 .

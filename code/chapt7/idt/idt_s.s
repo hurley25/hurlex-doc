@@ -71,7 +71,7 @@ ISR_NOERRCODE 31
 ISR_NOERRCODE 255
 
 [GLOBAL isr_common_stub]
-[EXTERN idt_handler]
+[EXTERN isr_handler]
 ; 中断服务程序
 isr_common_stub:
 	pusha                    ; Pushes edi, esi, ebp, esp, ebx, edx, ecx, eax
@@ -86,7 +86,7 @@ isr_common_stub:
 	mov ss, ax
 	
 	push esp		; 此时的 esp 寄存器的值等价于 pt_regs 结构体的指针
-	call idt_handler        ; 在 C 语言代码里
+	call isr_handler        ; 在 C 语言代码里
 	add esp, 4 		; 清除压入的参数
 	
 	pop ebx                 ; 恢复原来的数据段描述符

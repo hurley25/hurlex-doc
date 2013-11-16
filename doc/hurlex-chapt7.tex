@@ -29,9 +29,9 @@
 你处理完后把书拿起来继续看（恢复之前的执行现场）。这就是一个中断的处理过程，其实很简单是不是？这是不可屏蔽中断，那么可屏蔽\allowbreak
 的呢？还是刚刚那个场景，你在看书，手机响了（一个INTR中断），但是你在学习期间不想被打扰，就无视它了…这就是可屏蔽中断了。
 
-\par 通俗的例子举完了，我们还是专业一点好了。在x86PC中，我们熟知的中断控制芯片就是8259了，它就是我们说的中断控制器了。Intel的\allowbreak
-处理器允许256个中断，中断号范围是0～255。8259芯片负责15个，但是并不固定中断号，允许通过IO端口设置以避免冲突。所以，它的全称\allowbreak
-是可编程中断控制器（Programmable Interrupt Controller，PIC）。关于8259的资料网上铺天盖地的，至于8259的结构，\allowbreak
+\par 通俗的例子举完了，我们还是专业一点好了。在x86PC中，我们熟知的中断控制芯片就是8259A PIC了，它就是我们说的中断控制器了。Intel的\allowbreak
+处理器允许256个中断，中断号范围是0～255。8259A PIC芯片负责15个，但是并不固定中断号，允许通过IO端口设置以避免冲突。它的全称\allowbreak
+是可编程中断控制器（Programmable Interrupt Controller，PIC）。关于8259A PIC的资料网上铺天盖地的，至于8259A PIC的结构，\allowbreak
 如何屏蔽中断什么的我就不多说了，请大家自行去了解。
 
 \par 其实从上面的描述中我们基本上能理解中断的概念了。再简单说就是硬件发生了某个事件后告诉中断控制器，中断控制器汇报给CPU，\allowbreak
@@ -152,7 +152,7 @@ typedef void (*interrupt_handler_t)(pt_regs *);
 void register_interrupt_handler(uint8_t n, interrupt_handler_t h);
 
 // 调用中断处理函数
-void idt_handler(pt_regs *regs);
+void isr_handler(pt_regs *regs);
 
 // 声明中断处理函数 0-19 属于 CPU 的异常中断
 // ISR:中断服务程序(interrupt service routine)
@@ -269,7 +269,7 @@ ISR_NOERRCODE 255
 \par 以上是中断处理函数的最前一部分，接下来是所有中断处理函数共有的保护现场操作：
 \begin{lstlisting}[language = {[x86masm]Assembler}, caption = gdt/gdt\_s.s]
 [GLOBAL isr_common_stub]
-[EXTERN idt_handler]
+[EXTERN isr_handler]
 ; 中断服务程序
 isr_common_stub:
 	pusha                    ; Pushes edi, esi, ebp, esp, ebx, edx, ecx, eax
@@ -284,7 +284,7 @@ isr_common_stub:
 	mov ss, ax
 	
 	push esp		; 此时的 esp 寄存器的值等价于 pt_regs 结构体的指针
-	call idt_handler        ; 在 C 语言代码里
+	call isr_handler        ; 在 C 语言代码里
 	add esp, 4 		; 清除压入的参数
 	
 	pop ebx                 ; 恢复原来的数据段描述符
@@ -303,7 +303,7 @@ isr_common_stub:
 \par 这里声明了一个外部函数idt\_handler，它的实现如下：
 \begin{lstlisting}[language = C, caption = gdt/gdt.c]
 // 调用中断处理函数
-void idt_handler(pt_regs *regs)
+void isr_handler(pt_regs *regs)
 {
 	if (interrupt_handlers[regs->int_no]) {
 	      interrupt_handlers[regs->int_no](regs);

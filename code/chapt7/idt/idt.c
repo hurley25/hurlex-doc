@@ -102,7 +102,7 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 }
 
 // 调用中断处理函数
-void idt_handler(pt_regs *regs)
+void isr_handler(pt_regs *regs)
 {
 	if (interrupt_handlers[regs->int_no]) {
 	      interrupt_handlers[regs->int_no](regs);
