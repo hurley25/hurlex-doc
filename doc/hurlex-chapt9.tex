@@ -133,8 +133,33 @@ struct mmap_entry_t {
 可能用32位表示不下，不过我们只考虑32位操作系统，而且暂时只支持512MB的内存即可。type成员用来描述这个内存段的属性，因为物理\allowbreak
 不一定指向RAM里，也可能是其它外设。
 
-\par 现在第一个问题解决了一半了，但是我们需要知道内核本身加载到物理内存的位置信息，这块内存必须是管理区域被保留的。\allowbreak
-怎么获取呢？看起来很困难，其实解决起来特别容易。大家想想，链接器负责了整个内核文件的链接和重定位工作，肯定知道内核\allowbreak
+\par 下面的代码实现了遍历这个结构，打印所有物理内存段的操作：
+
+\begin{lstlisting}[language = C, caption = mm/pmm.c]
+#include "multiboot.h"
+#include "common.h"
+#include "debug.h"
+#include "pmm.h"
+
+void show_memory_map()
+{
+	uint32_t mmap_addr = glb_mboot_ptr->mmap_addr;
+	uint32_t mmap_length = glb_mboot_ptr->mmap_length;
+
+	printk("Memory map:\n");
+
+	mmap_entry_t *mmap = (mmap_entry_t *)mmap_addr;
+	for (mmap = (mmap_entry_t *)mmap_addr; (uint32_t)mmap < mmap_addr + mmap_length; mmap++) {
+		printk("base_addr = 0x%X%08X, length = 0x%X%08X, type = 0x%X\n",
+			(uint32_t)mmap->base_addr_high, (uint32_t)mmap->base_addr_low,
+			(uint32_t)mmap->length_high, (uint32_t)mmap->length_low,
+			(uint32_t)mmap->type);
+	}
+}
+\end{lstlisting}
+
+\par 现在第一个问题解决了。等等，我们还需要知道内核本身加载到物理内存的位置信息，这块内存必须是物理内存管理所保留的。\allowbreak
+那怎么获取呢？看起来很困难，其实解决起来特别容易。大家想想，链接器负责了整个内核文件的链接和重定位工作，肯定知道内核\allowbreak
 文件加载到内存中的位置。我们修改链接器脚本，定义两个变量：
 
 \begin{lstlisting}[caption = script/kernel.ld]
@@ -162,6 +187,169 @@ struct mmap_entry_t {
 	... ...
 \end{lstlisting}
 
-\par 我们在最先放置的段.text的开始位置和最后一个段.stabstr的结尾定义了两个变量kern\_start和kern\_end，这两个变量\allowbreak
-在C代码里声明后就可以了。
+\par 从上面的代码里可以看到最先放置的段.text的开始位置和最后一个段.stabstr的结尾分别定义了两个变量kern\_start和kern\_end，这\allowbreak
+两个变量在C代码里声明后就可以使用了。
 
+\par 我们添加如下的头文件：
+
+\begin{lstlisting}[language = C, caption = include/pmm.h]
+#ifndef INCLUDE_PMM_H
+#define INCLUDE_PMM_H
+
+#include "multiboot.h"
+
+// 内核文件在内存中的起始和结束位置
+// 在链接器脚本中要求链接器定义
+extern uint8_t kern_start[];
+extern uint8_t kern_end[];
+
+// 输出 BIOS 提供的物理内存布局
+void show_memory_map();
+
+#endif 	// INCLUDE_PMM_H
+\end{lstlisting}
+
+\par 接着修改入口函数进行测试，代码如下：
+
+\begin{lstlisting}[language = C, caption = init/entry.c]
+#include "console.h"
+#include "debug.h"
+#include "gdt.h"
+#include "idt.h"
+#include "timer.h"
+#include "pmm.h"
+
+int kern_entry()
+{
+	init_debug();
+	init_gdt();
+	init_idt();
+
+	console_clear();
+	printk_color(rc_black, rc_green, "Hello, OS kernel!\n\n");
+
+	init_timer(200);
+
+	// 开启中断
+	// asm volatile ("sti");
+
+	printk("kernel in memory start: 0x%08X\n", kern_start);
+	printk("kernel in memory end:   0x%08X\n", kern_end);
+	printk("kernel in memory used:   %d KB\n\n", (kern_end - kern_start + 1023) / 1024);
+	
+	show_memory_map();
+	
+	return 0;
+}
+\end{lstlisting}
+
+\par 编译运行之后结果如下：
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[scale=0.6]{picture/chapt9/PHY_MEM_MAP.png}
+      \caption{物理内存布局}
+\end{figure}
+
+\par 我们采用的是qemu虚拟机默认的配置，所以物理内存大约是32MB。从这个输出结果中可以看到，可用的内存段是1MB以下的0x0-0x9FC00\allowbreak
+和1M以上的0x100000-0x7EFE000两段。需要注意的是这个区域随着我们的虚拟机内存设置不同而不同，所以这个值只是我自己虚拟机跑出来\allowbreak
+的一种结果。另外我们也成功的输出了内核的起始位置0x100000（1MB处）和结束位置0x114000以及占用的内存大小是80KB。\allowbreak
+\footnote{内核加载的结束位置和占用内存大小会随着代码和数据的逐渐增多而变大，这只是现阶段的大小。}
+
+\par 第一个问题算是完全解决了，下面是第二个问题：采用什么样的数据结构来描述物理内存？
+
+\par 为了支持后续的虚拟内存管理，物理内存也必须按照4KB的页框来管理内存。\footnote{这里的所谓的分页只是逻辑上的区分。}\allowbreak
+1MB以下的物理地址区域有太多的外设的存储区域映射在这里，为了大家实验的时候避免一些不必要的麻烦，我们不使用1MB以下的零碎\allowbreak
+物理内存，而是直接在1MB以上支持最多512MB的物理内存管理。
+
+\par 物理内存管理算法最著名的就是Linux内核所采用的伙伴算法了，这方面的资料也很容易获取到。伙伴算法在申请和释放物理页框\allowbreak
+的时候会对物理页框进行合并操作，尽可能的保证可用物理内存的连续性。这里需要引入内存碎片这个概念，内存碎片分为内部碎片和\allowbreak
+外部碎片两种。内部碎片就是已经被分配出去却不能被利用的内存空间，比如我们为了管理方便，按照4KB内存块进行管理。此时任何申\allowbreak
+请内存的操作都会以4KB的倍数返回内存块。即使申请1个字节也返回指向4KB大的内存块的指针，这样的话造成了分配出去的内存没有被\allowbreak
+有效利用，而且剩余空间无法分配给其它进程（因为最小的管理单位是4KB）。外部碎片是指内存频繁请求和释放大小不同的连续页框后，\allowbreak
+导致在已分配页框块周围分散了许多小块空闲的页框，尽管这些空闲页框的总数可以满足接下来的请求，但却无法满足一个大块的连续\allowbreak
+页框。
+
+\par 不过在本章并不会去实现伙伴算法。理由很简单，如果在大家对物理内存管理都没有概念的时候就贸然引入伙伴算法后带来的机制\allowbreak
+和策略的双重复杂性就难以学习和接受了。我们会采用一个很简单的策略来对内存进行管理操作：将物理页面的管理地址设定在1MB以上\allowbreak
+内核加载的结束位置之后，从这个起始位置到512MB的地址处将所有的物理内存按页划分，将每页的地址放入栈里存储。这样在需要的\allowbreak
+时候就可以按页获取到内存了，那么申请大块内存的时候呢？先卖个关子，我们下一章来解决。
+
+\par 在开启虚拟分页以前，仍旧需要几个物理页来放置内核的页目录和一些页表。物理内存的0-640KB的位置是必然空闲的，我们先来\allowbreak
+实现一个原始的页分配函数。代码如下：
+
+\begin{lstlisting}[language = C, caption = mm/pmm.c]
+// 是否开启内存分页
+uint8_t mm_paging_active = 0;
+
+
+// 没有开启分页机制时的内存管理方案采用的管理指针
+static uint32_t pmm_location;
+
+void init_pmm()
+{
+	// 简单起见，内存 0～640 KB 是空闲的
+	// 我们直接把原始的物理内存页管理起始地址设为 0
+	pmm_location = 0;
+}
+
+uint32_t pmm_alloc_page()
+{
+	// 根据是否开启分页决定对内存的管理策略
+	if (mm_paging_active) {
+		// TODO
+	}
+
+	// 0x1000 即 4096D，每页内存 4 KB
+	pmm_location += 0x1000;
+
+	return pmm_location;
+}
+
+void pmm_free_page(uint32_t p)
+{
+	// TODO
+}
+
+\end{lstlisting}
+
+\par 最后在入口函数中添加一下内容：
+
+\begin{lstlisting}[language = C, caption = init/entry.c]
+#include "console.h"
+#include "debug.h"
+#include "gdt.h"
+#include "idt.h"
+#include "timer.h"
+#include "pmm.h"
+
+int kern_entry()
+{
+	... ...
+
+	printk("kernel in memory start: 0x%08X\n", kern_start);
+	printk("kernel in memory end:   0x%08X\n", kern_end);
+	printk("kernel in memory used:   %d KB\n\n", (kern_end - kern_start + 1023) / 1024);
+	
+	show_memory_map();
+
+	init_pmm();
+
+	printk("phy mem alloc in : 0x%08X\n", pmm_alloc_page());
+	printk("phy mem alloc in : 0x%08X\n", pmm_alloc_page());
+	printk("phy mem alloc in : 0x%08X\n", pmm_alloc_page());
+	printk("phy mem alloc in : 0x%08X\n", pmm_alloc_page());
+
+	return 0;
+}
+\end{lstlisting}
+
+\par 最终的测试结果如图所示：
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[scale=0.6]{picture/chapt9/PHY_MEM_ALLOC.png}
+      \caption{原始的物理内存页分配函数}
+\end{figure}
+
+\par 本章到这里就告一段落了，下一章我们来探讨虚拟内存管理的实现。
