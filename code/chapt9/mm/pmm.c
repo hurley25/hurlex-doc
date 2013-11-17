@@ -45,22 +45,13 @@ void show_memory_map()
 
 void init_pmm()
 {
-	// 简单起见，内存 0～640 KB 是空闲的
-	// 我们直接把原始的物理内存页管理起始地址设为 0
-	pmm_location = 0;
+	// TODO
 }
 
 uint32_t pmm_alloc_page()
 {
-	// 根据是否开启分页决定对内存的管理策略
-	if (mm_paging_active) {
-		// TODO
-	}
-
-	// 0x1000 即 4096D，每页内存 4 KB
-	pmm_location += 0x1000;
-
-	return pmm_location;
+	// TODO
+	return 0;
 }
 
 void pmm_free_page(uint32_t p)

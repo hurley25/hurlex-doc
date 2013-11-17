@@ -275,8 +275,7 @@ int kern_entry()
 内核加载的结束位置之后，从这个起始位置到512MB的地址处将所有的物理内存按页划分，将每页的地址放入栈里存储。这样在需要的\allowbreak
 时候就可以按页获取到内存了，那么申请大块内存的时候呢？先卖个关子，我们下一章来解决。
 
-\par 在开启虚拟分页以前，仍旧需要几个物理页来放置内核的页目录和一些页表。物理内存的0-640KB的位置是必然空闲的，我们先来\allowbreak
-实现一个原始的页分配函数。代码如下：
+\par 目前的代码框架如下：
 
 \begin{lstlisting}[language = C, caption = mm/pmm.c]
 // 是否开启内存分页
@@ -288,22 +287,13 @@ static uint32_t pmm_location;
 
 void init_pmm()
 {
-	// 简单起见，内存 0～640 KB 是空闲的
-	// 我们直接把原始的物理内存页管理起始地址设为 0
-	pmm_location = 0;
+	// TODO
 }
 
 uint32_t pmm_alloc_page()
 {
-	// 根据是否开启分页决定对内存的管理策略
-	if (mm_paging_active) {
-		// TODO
-	}
-
-	// 0x1000 即 4096D，每页内存 4 KB
-	pmm_location += 0x1000;
-
-	return pmm_location;
+	// TODO
+	return 0;
 }
 
 void pmm_free_page(uint32_t p)
@@ -311,6 +301,37 @@ void pmm_free_page(uint32_t p)
 	// TODO
 }
 
+\end{lstlisting}
+
+\par 其对应的头文件如下：
+
+\begin{lstlisting}[language = C, caption = include/pmm.h]
+#ifndef INCLUDE_PMM_H
+#define INCLUDE_PMM_H
+
+#include "multiboot.h"
+
+// 支持的最大物理内存 512MB
+#define PMM_MAX_SIZE 0x20000000
+
+// 内核文件在内存中的起始和结束位置
+// 在链接器脚本中要求链接器定义
+extern uint8_t kern_start[];
+extern uint8_t kern_end[];
+
+// 输出 BIOS 提供的物理内存布局
+void show_memory_map();
+
+// 初始化物理内存管理
+void init_pmm();
+
+// 返回一个内存页的物理地址
+uint32_t pmm_alloc_page();
+
+// 释放申请的内存
+void pmm_free_page(uint32_t p);
+
+#endif 	// INCLUDE_PMM_H
 \end{lstlisting}
 
 \par 最后在入口函数中添加一下内容：

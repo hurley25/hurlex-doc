@@ -22,7 +22,7 @@
 #include "multiboot.h"
 
 // 支持的最大物理内存 512MB
-#define PMM_MAX 0x20000000
+#define PMM_MAX_SIZE 0x20000000
 
 // 内核文件在内存中的起始和结束位置
 // 在链接器脚本中要求链接器定义
