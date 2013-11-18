@@ -114,8 +114,8 @@ void free_chunk(header_t *chunk)
 	}
 
 	// 空闲的内存超过 1 页的话就释放掉
-	while ((heap_max - 0x1000) >= (uint32_t)chunk) {
-		heap_max -= 0x1000;
+	while ((heap_max - PAGE_SIZE) >= (uint32_t)chunk) {
+		heap_max -= PAGE_SIZE;
 		uint32_t page;
 		get_mapping(pgd_kern, heap_max, &page);
 		pmm_free_page(page);

@@ -59,18 +59,19 @@ void switch_pgd(uint32_t pd)
 }
 
 void map(pgd_t *pgd_now, uint32_t va, uint32_t pa, uint32_t flags)
-{
+{ 	
+	// TODO BUG!!
 	uint8_t pgd_idx = PGD_INDEX(va);
 	uint8_t pte_idx = PTE_INDEX(va); 
 	
 	pte_t *pte = (pte_t *)pgd_now[pgd_idx];
 	if (!pte) {
 		pte = (pte_t *)pmm_alloc_page();	
-		bzero(pte, 0x1000);
+		bzero((uint8_t *)pte + PAGE_OFFSET, PAGE_SIZE);
 		pgd_now[pgd_idx] = (uint32_t)pte | PAGE_PRESENT | PAGE_WRITE;
 	}
 
-	pte[pte_idx] = (pa & PAGE_MASK) | flags;
+	((pte_t *)((uint32_t)pte+PAGE_OFFSET))[pte_idx] = (pa & PAGE_MASK) | flags;
 
 	// 通知 CPU 更新页表缓存
 	asm volatile ("invlpg (%0)" : : "a" (va));
@@ -78,12 +79,14 @@ void map(pgd_t *pgd_now, uint32_t va, uint32_t pa, uint32_t flags)
 
 void unmap(pgd_t *pgd_now, uint32_t va)
 {
+	// TODO BUG!!
+	uint8_t pgd_idx = PGD_INDEX(va);
 	uint8_t pgd_idx = PGD_INDEX(va);
 	uint8_t pte_idx = PTE_INDEX(va);
 
 	pte_t *pte = (pte_t *)pgd_now[pgd_idx];
 
-	pte[pte_idx] = 0;
+	((pte_t *)((uint32_t)pte+PAGE_OFFSET))[pte_idx] = 0;
 
 	// 通知 CPU 更新页表缓存
 	asm volatile ("invlpg (%0)" : : "a" (va));
@@ -91,6 +94,8 @@ void unmap(pgd_t *pgd_now, uint32_t va)
 
 uint32_t get_mapping(pgd_t *pgd_now, uint32_t va, uint32_t *pa)
 {
+	// TODO BUG!!
+	uint8_t pgd_idx = PGD_INDEX(va);
 	uint8_t pgd_idx = PGD_INDEX(va);
 	uint8_t pte_idx = PTE_INDEX(va);
 
@@ -99,6 +104,8 @@ uint32_t get_mapping(pgd_t *pgd_now, uint32_t va, uint32_t *pa)
 	      return 0;
 	}
 	
+	pte = (pte_t *)((uint32_t)pte+PAGE_OFFSET);
+
 	// 如果地址有效而且指针不为NULL，则返回地址
 	if (pte[pte_idx] != 0 && pa) {
 		 *pa = pte[pte_idx] & PAGE_MASK;
