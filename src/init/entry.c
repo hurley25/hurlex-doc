@@ -49,12 +49,12 @@ __attribute__((section(".init.text"))) void kern_entry()
 	// 映射内核虚拟地址 4MB 到物理地址的前 4MB
 	int i;
 	for (i = 0; i < 1024; i++) {
-	      pte_low[i] = (i << 12) | PAGE_PRESENT | PAGE_WRITE;
+		pte_low[i] = (i << 12) | PAGE_PRESENT | PAGE_WRITE;
 	}
 
 	// 映射 0x00000000-0x00400000 的物理地址到虚拟地址 0xC0000000-0xC0400000
 	for (i = 0; i < 1024; i++) {
-	      pte_hign[i] = (i << 12) | PAGE_PRESENT | PAGE_WRITE;
+		pte_hign[i] = (i << 12) | PAGE_PRESENT | PAGE_WRITE;
 	}
 	
 	// 设置临时页表

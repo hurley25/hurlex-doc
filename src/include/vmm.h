@@ -21,6 +21,7 @@
 
 #include "types.h"
 #include "idt.h"
+#include "vmm.h"
 
 // 内核的偏移地址
 #define PAGE_OFFSET 	0xC0000000
@@ -70,8 +71,20 @@ typedef uint32_t pgd_t;
 // 页表数据类型
 typedef uint32_t pte_t;
 
+// 页表成员数
+#define PGD_SIZE (PAGE_SIZE/sizeof(pte_t))
+
+// 页表成员数
+#define PTE_SIZE (PAGE_SIZE/sizeof(uint32_t))
+
+// 映射 512MB 内存所需要的页表数
+#define PTE_COUNT 128
+
 // 内核页目录地址
-extern pgd_t *pgd_kern;
+extern pgd_t pgd_kern[PGD_SIZE];
+
+// 内核固定映射页表
+extern pte_t pte_kern[PTE_COUNT][PTE_SIZE];
 
 // 初始化虚拟内存管理
 void init_vmm();
@@ -87,7 +100,7 @@ void unmap(pgd_t *pgd_now, uint32_t va);
 
 // 如果虚拟地址 va 映射到物理地址则返回 1
 // 同时如果 pa 不是空指针则把物理地址写入 pa 参数
-char get_mapping(pgd_t *pgd_now, uint32_t va, uint32_t *pa);
+uint32_t get_mapping(pgd_t *pgd_now, uint32_t va, uint32_t *pa);
 
 // 页错误中断的函数处理
 void page_fault(pt_regs *regs);
