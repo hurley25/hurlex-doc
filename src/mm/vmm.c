@@ -60,18 +60,20 @@ void switch_pgd(uint32_t pd)
 
 void map(pgd_t *pgd_now, uint32_t va, uint32_t pa, uint32_t flags)
 { 	
-	// TODO BUG!!
-	uint8_t pgd_idx = PGD_INDEX(va);
-	uint8_t pte_idx = PTE_INDEX(va); 
+	uint32_t pgd_idx = PGD_INDEX(va);
+	uint32_t pte_idx = PTE_INDEX(va); 
 	
 	pte_t *pte = (pte_t *)pgd_now[pgd_idx];
 	if (!pte) {
-		pte = (pte_t *)pmm_alloc_page();	
-		bzero((uint8_t *)pte + PAGE_OFFSET, PAGE_SIZE);
+		pte = (pte_t *)pmm_alloc_page();
 		pgd_now[pgd_idx] = (uint32_t)pte | PAGE_PRESENT | PAGE_WRITE;
 	}
 
-	((pte_t *)((uint32_t)pte+PAGE_OFFSET))[pte_idx] = (pa & PAGE_MASK) | flags;
+	// 转换到内核线性地址
+	pte = (pte_t *)((uint32_t)pte + PAGE_OFFSET);
+
+	bzero(pte, PAGE_SIZE);
+	pte[pte_idx] = (pa & PAGE_MASK) | flags;
 
 	// 通知 CPU 更新页表缓存
 	asm volatile ("invlpg (%0)" : : "a" (va));
@@ -79,14 +81,19 @@ void map(pgd_t *pgd_now, uint32_t va, uint32_t pa, uint32_t flags)
 
 void unmap(pgd_t *pgd_now, uint32_t va)
 {
-	// TODO BUG!!
-	uint8_t pgd_idx = PGD_INDEX(va);
-	uint8_t pgd_idx = PGD_INDEX(va);
-	uint8_t pte_idx = PTE_INDEX(va);
+	uint32_t pgd_idx = PGD_INDEX(va);
+	uint32_t pte_idx = PTE_INDEX(va);
 
 	pte_t *pte = (pte_t *)pgd_now[pgd_idx];
 
-	((pte_t *)((uint32_t)pte+PAGE_OFFSET))[pte_idx] = 0;
+	if (!pte) {
+		return;
+	}
+
+	// 转换到内核线性地址
+	pte = (pte_t *)((uint32_t)pte + PAGE_OFFSET);
+
+	pte[pte_idx] = 0;
 
 	// 通知 CPU 更新页表缓存
 	asm volatile ("invlpg (%0)" : : "a" (va));
@@ -94,16 +101,15 @@ void unmap(pgd_t *pgd_now, uint32_t va)
 
 uint32_t get_mapping(pgd_t *pgd_now, uint32_t va, uint32_t *pa)
 {
-	// TODO BUG!!
-	uint8_t pgd_idx = PGD_INDEX(va);
-	uint8_t pgd_idx = PGD_INDEX(va);
-	uint8_t pte_idx = PTE_INDEX(va);
+	uint32_t pgd_idx = PGD_INDEX(va);
+	uint32_t pte_idx = PTE_INDEX(va);
 
 	pte_t *pte = (pte_t *)pgd_now[pgd_idx];
 	if (!pte) {
 	      return 0;
 	}
 	
+	// 转换到内核线性地址
 	pte = (pte_t *)((uint32_t)pte+PAGE_OFFSET);
 
 	// 如果地址有效而且指针不为NULL，则返回地址

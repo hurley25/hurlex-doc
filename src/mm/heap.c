@@ -20,9 +20,16 @@
 #include "vmm.h"
 #include "heap.h"
 
+// 申请内存块
 static void alloc_chunk(uint32_t start, uint32_t len);
+
+// 释放内存块
 static void free_chunk(header_t *chunk);
+
+// 切分内存块
 static void split_chunk(header_t *chunk, uint32_t len);
+
+// 合并内存块
 static void glue_chunk(header_t *chunk);
 
 static uint32_t heap_max = HEAP_START;
@@ -118,8 +125,8 @@ void free_chunk(header_t *chunk)
 		heap_max -= PAGE_SIZE;
 		uint32_t page;
 		get_mapping(pgd_kern, heap_max, &page);
-		pmm_free_page(page);
 		unmap(pgd_kern, heap_max);
+		pmm_free_page(page);
 	}
 }
 
@@ -151,7 +158,7 @@ void glue_chunk(header_t *chunk)
 	if (chunk->prev && chunk->prev->allocated == 0) {
 		chunk->prev->length = chunk->prev->length + chunk->length;
 		chunk->prev->next = chunk->next;
-		chunk->next->prev = chunk->prev;
+		//TODO chunk->next->prev = chunk->prev;
 		chunk = chunk->prev;
 	}
 
@@ -174,13 +181,13 @@ void test_heap()
 	void *addr4 = kmalloc(50000);
 	printk("kmalloc 50000 byte in 0x%X\n\n", addr4);
 
-	printk("free mem in 0x%X\n", addr1);
-	kfree(addr1);
-	printk("free mem in 0x%X\n", addr2);
-	kfree(addr2);
-	printk("free mem in 0x%X\n", addr3);
-	kfree(addr3);
-	printk("free mem in 0x%X\n\n", addr4);
-	kfree(addr4);
+//	printk("free mem in 0x%X\n", addr1);
+//	kfree(addr1);
+//	printk("free mem in 0x%X\n", addr2);
+//	kfree(addr2);
+//	printk("free mem in 0x%X\n", addr3);
+//	kfree(addr3);
+//	printk("free mem in 0x%X\n\n", addr4);
+//	kfree(addr4);
 }
 
