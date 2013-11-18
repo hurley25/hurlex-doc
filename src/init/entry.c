@@ -35,18 +35,16 @@ multiboot_t *glb_mboot_ptr;
 char kern_stack[STACK_SIZE];
 
 // 内核使用的临时页表和页目录
-// 该地址必须是页对齐的地址，内存 0-640KB 肯定是空闲的，我们只使用12KB作为临时页表
-__attribute__((section(".init.data"))) pgd_t *pgd_tmp =  (pgd_t *)0x0000;
-__attribute__((section(".init.data"))) pgd_t *pte_low =  (pgd_t *)0x1000;
-__attribute__((section(".init.data"))) pgd_t *pte_hign = (pgd_t *)0x2000;
+// 该地址必须是页对齐的地址，内存 0-640KB 肯定是空闲的
+__attribute__((section(".init.data"))) pgd_t *pgd_tmp  = (pgd_t *)0x1000;
+__attribute__((section(".init.data"))) pgd_t *pte_low  = (pgd_t *)0x2000;
+__attribute__((section(".init.data"))) pgd_t *pte_hign = (pgd_t *)0x3000;
 
 // 内核入口函数
-__attribute__((section(".init.text"))) int kern_entry()
+__attribute__((section(".init.text"))) void kern_entry()
 {
-	uint32_t kpgd_idx = PGD_INDEX(PAGE_OFFSET);
-
 	pgd_tmp[0] = (uint32_t)pte_low | PAGE_PRESENT | PAGE_WRITE;
-	pgd_tmp[kpgd_idx] = (uint32_t)pte_hign | PAGE_PRESENT | PAGE_WRITE;
+	pgd_tmp[PGD_INDEX(PAGE_OFFSET)] = (uint32_t)pte_hign | PAGE_PRESENT | PAGE_WRITE;
 
 	// 映射内核虚拟地址 4MB 到物理地址的前 4MB
 	int i;
@@ -78,7 +76,7 @@ __attribute__((section(".init.text"))) int kern_entry()
 	register_interrupt_handler(14, &page_fault);
 
 	// 更新全局 multiboot_t 指针
-	glb_mboot_ptr = mboot_ptr_tmp;
+	glb_mboot_ptr = mboot_ptr_tmp + PAGE_OFFSET;
 
 	// 调用内核初始化函数
 	kern_init();
@@ -86,8 +84,6 @@ __attribute__((section(".init.text"))) int kern_entry()
 	while (1) {
 		asm volatile ("hlt");
 	}
-
-	return 0;
 }
 
 void kern_init()
@@ -106,8 +102,22 @@ void kern_init()
 
 	printk("kernel in memory start: 0x%08X\n", kern_start);
 	printk("kernel in memory end:   0x%08X\n", kern_end);
-	printk("kernel in memory used:   %d KB\n\n", (kern_end - kern_start + 1023) / 1024);
+	printk("kernel in memory used:   %d KB\n\n", (kern_end - kern_start) / 1024);
 	
 	show_memory_map();
+	init_pmm();
+
+	printk_color(rc_black, rc_red, "\nThe Count of Physical Memory Page is: %u\n\n", phy_page_count);
+
+	uint32_t allc_addr = NULL;
+	printk_color(rc_black, rc_light_brown, "Test Physical Memory Alloc :\n");
+	allc_addr = pmm_alloc_page();
+	printk_color(rc_black, rc_light_brown, "Alloc Physical Addr: 0x%08X\n", allc_addr);
+	allc_addr = pmm_alloc_page();
+	printk_color(rc_black, rc_light_brown, "Alloc Physical Addr: 0x%08X\n", allc_addr);
+	allc_addr = pmm_alloc_page();
+	printk_color(rc_black, rc_light_brown, "Alloc Physical Addr: 0x%08X\n", allc_addr);
+	allc_addr = pmm_alloc_page();
+	printk_color(rc_black, rc_light_brown, "Alloc Physical Addr: 0x%08X\n", allc_addr);
 }
 

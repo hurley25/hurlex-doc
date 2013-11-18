@@ -32,13 +32,7 @@ MBOOT_CHECKSUM 		equ 	- (MBOOT_HEADER_MAGIC + MBOOT_HEADER_FLAGS)
 ; 我们只使用到这些就够了，更多的详细说明请参阅 GNU 相关文档
 ;-----------------------------------------------------------
 
-section .bss 			 ; 未初始化的数据段从这里开始
-stack:
-	resb 32768 	 	 ; 这里作为内核栈
-glb_mboot_ptr: 			 ; 全局的 multiboot 结构体指针
-	resb 4
-
-STACK_TOP equ $-stack-1 	 ; 内核栈顶，$ 符指代是当前地址
+;-----------------------------------------------------------------------------
 
 [BITS 32]  	; 所有代码以 32-bit 的方式编译
 
@@ -55,15 +49,25 @@ dd MBOOT_CHECKSUM       ; 检测数值，其含义在定义处
 [EXTERN kern_entry] 	; 声明内核 C 代码的入口函数
 
 start:
-	cli  				; 此时还没有设置好保护模式的中断处理，所以必须关闭中断
-	mov [glb_mboot_ptr], ebx	; 将 ebx 中存储的指针存入 glb_mboot_ptr 变量
-	mov esp, STACK_TOP  		; 设置内核栈地址，按照 multiboot 规范，当需要使用堆栈时，OS映象必须自己创建一个
-	and esp, 0FFFFFFF0H		; 栈地址按照16字节对齐
-	mov ebp, 0 			; 帧指针修改为 0
-    
-	call kern_entry	; 调用内核入口函数
-
+	cli  			 ; 此时还没有设置好保护模式的中断处理，要关闭中断
+				 ; 所以必须关闭中断
+	mov esp, STACK_TOP  	 ; 设置内核栈地址
+	mov ebp, 0 		 ; 帧指针修改为 0
+	and esp, 0FFFFFFF0H	 ; 栈地址按照16字节对齐
+	mov [glb_mboot_ptr], ebx ; 将 ebx 中存储的指针存入全局变量
+	call kern_entry		 ; 调用内核入口函数
 stop:
-	hlt 		; 停机指令，什么也不做，可以降低 CPU 功耗
-	jmp stop 	; 到这里结束，关机什么的后面再说
+	hlt 			 ; 停机指令，什么也不做，可以降低 CPU 功耗
+	jmp stop 		 ; 到这里结束，关机什么的后面再说
 
+;-----------------------------------------------------------------------------
+
+section .bss 			 ; 未初始化的数据段从这里开始
+stack:
+	resb 32768 	 	 ; 这里作为内核栈
+glb_mboot_ptr: 			 ; 全局的 multiboot 结构体指针
+	resb 4
+
+STACK_TOP equ $-stack-1 	 ; 内核栈顶，$ 符指代是当前地址
+
+;-----------------------------------------------------------------------------

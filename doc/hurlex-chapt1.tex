@@ -177,17 +177,17 @@ debug:
 ENTRY(start)
 SECTIONS
 {
-	/* 代码段起始位置 */
-	.text 0x100000 :
+	/* 段起始位置 */
+
+	. = 0x100000;
+	.text :
 	{
-		code = .; _code = .; __code = .;
 		*(.text)
 		. = ALIGN(4096);
 	}
 
 	.data :
 	{
-		data = .; _data = .; __data = .;
 		*(.data)
 		*(.rodata)
 		. = ALIGN(4096);
@@ -195,26 +195,21 @@ SECTIONS
 
 	.bss :
 	{
-		bss = .; _bss = .; __bss = .;
 		*(.bss)
 		. = ALIGN(4096);
 	}
 
 	.stab :
 	{
-		stab = .; _stab = .; __stab = .;
 		*(.stab)
 		. = ALIGN(4096);
 	}
 	
 	.stabstr :
 	{
-		stabstr = .; _stabstr = .; __stabstr = .;
 		*(.stabstr)
 	 	. = ALIGN(4096);
 	}
-	
-	end = .; _end = .; __end = .;
 
 	/DISCARD/ : { *(.comment) *(.eh_frame) }
 }
@@ -222,11 +217,10 @@ SECTIONS
  
 \par 这个脚本告诉ld程序如何构造我们所需的内核映像文件。
 
-\par 首先，脚本声明了内核程序的入口地址是符号 "start" 。然后声明了第一个段.text段（代码段）\allowbreak
-以及它的起始地址0x100000（1MB）。接着是已初始化数据段.data和未初始化数据段.bss以及它们采用的4096的\allowbreak
-页对齐方式。Linux GCC 增加了额外的数据段.rodata，这是一个只读的已初始化数据段，放置常量什么的。\allowbreak
-另外为了简单起见，我们把.rodata段和.data段放在了一起。最后的stab和stabstr段暂时无需关注，等到后\allowbreak
-面讲到调试信息的时候就会明白。
+\par 首先，脚本声明了内核程序的入口地址是符号 "start" 。然后声明了段起始位置0x100000（1MB），接着是第一个段.text段（代码段）\allowbreak
+、已初始化数据段.data、未初始化数据段.bss以及它们采用的4096的页对齐方式。Linux GCC 增加了额外的数据段.rodata，这是一个\allowbreak
+只读的已初始化数据段，放置常量什么的。另外为了简单起见，我们把.rodata段和.data段放在了一起。最后的stab和stabstr段暂时无\allowbreak
+需关注，等到后面讲到调试信息的时候就会明白。
 
 \par 如果你对这里的ld链接器的脚本不是很理解也不是很重要，只要理解了脚本表示的意思就好。
 \footnote{如果你对编译和链接的过程所知甚少的话，那么我厚脸推荐你我的博客看两篇文章。分别是\allowbreak

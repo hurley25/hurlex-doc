@@ -23,10 +23,10 @@
 #include "vargs.h"
 #include "elf.h"
 
-#define assert(x)                                       	\
+#define assert(x, info)                                       	\
 	do {                                                	\
 		if (!(x)) {                                     \
-			panic("assertion failed: %s", #x);      \
+			panic(info);     			\
 		}                                               \
 	} while (0)
 
