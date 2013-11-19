@@ -226,7 +226,7 @@ typedef __builtin_va_list va_list;
 
 \par 源码级的调试效果如图：
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.4]{picture/chapt5/os_debug.png}
       \caption{源码级别调试内核}
@@ -526,7 +526,7 @@ C语言编程的话自然无需关注这些，因为编译器会替我们打点�
 \par 不知道我刚刚的描述大家理解了没有？如果还有点迷糊的话来看下面的这张图片，这是按照上文的描述给出的函数调用函数栈的示意图。\allowbreak
 不过需要注意的是，所有的地址是根据我自己机器上生成的汇编地址绘制的。大家可能会有不一样的地址，但是原理是一致的。
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt5/os_function_stack.png}
       \caption{内核函数调用栈}
@@ -654,9 +654,9 @@ int kern_entry()
 
 \par 运行结果如图：
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
-      \includegraphics[scale=0.6]{picture/chapt5/os_panic.png}
+      \includegraphics[scale=0.5]{picture/chapt5/os_panic.png}
       \caption{panic 函数测试图}
 \end{figure}
 

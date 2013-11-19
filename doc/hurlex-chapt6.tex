@@ -45,7 +45,7 @@
 \footnote{本章很多图片直接引用自《Intel® 64 and IA-32 Architectures Software Developer’s Manual Vol-ume3 :
 System Programming Guide》，下文不再声明。}
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.45]{picture/chapt6/segment_descriptor.png}
       \caption{段描述符的结构}
@@ -59,7 +59,7 @@ System Programming Guide》，下文不再声明。}
  一个48位的专用的全局描述符表寄存器（GDTR）来保存全局描述符表的信息。那这48位怎么分配呢？如图所示，0-15位表示GDT\allowbreak
  的边界位置（数值为表的长度-1，因为从0计算），16-47位这32位存放的就是GDT的基地址（恰似数组的首地址）。
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt6/gdtr.png}
       \caption{GDTR的结构}
@@ -73,7 +73,7 @@ System Programming Guide》，下文不再声明。}
 分别是CR0到CR3，以及CR8。用来表示CPU的一些状态，其中的CR0寄存器的PE位（Protection Enable，保护模式允许位），0号位，\allowbreak
 就表示了CPU的运行状态，0为实模式，1为保护模式。通过修改这个位就可以立即改变CPU的工作模式。
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt6/cr0.png}
       \caption{CR0寄存器的结构}
@@ -89,7 +89,7 @@ System Programming Guide》，下文不再声明。}
 
 \par 地址合成的过程如下图所示：
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt6/protected_segment_addr.png}
       \caption{段机制的地址合成过程}
@@ -109,7 +109,7 @@ System Programming Guide》，下文不再声明。}
 方法。当整个虚拟地址空间是一个起始地址为0，限长为4G的"段"时，我们给出的偏移地址就在数值上等于是段机制处理之后的地址了。
 不过我们不是简单的对所有的段使用同样的描述符，而是给代码段和数据段分配不同的描述符。下面的示意图描述了这个抽象：
 
-\begin{figure}[H]
+\begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt6/protected_flat_mode.png}
       \caption{带有保护的平坦模式}
