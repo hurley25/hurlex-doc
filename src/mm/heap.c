@@ -70,7 +70,7 @@ void *kmalloc(uint32_t len)
 	// 第一次执行该函数则初始化内存块起始位置
 	// 之后根据当前指针加上申请的长度即可
 	if (prev_header) {
-	      chunk_start = (uint32_t)prev_header + prev_header->length;
+		chunk_start = (uint32_t)prev_header + prev_header->length;
 	} else {
 		chunk_start = HEAP_START;
 		heap_first = (header_t *)chunk_start;
@@ -115,7 +115,7 @@ void alloc_chunk(uint32_t start, uint32_t len)
 void free_chunk(header_t *chunk)
 {
 	if (chunk->prev == 0) {
-	      heap_first = 0;
+		heap_first = 0;
 	} else {
 		chunk->prev->next = 0;
 	}
@@ -164,7 +164,7 @@ void glue_chunk(header_t *chunk)
 
 	// 假如该内存后面没有链表内存块了直接释放掉
 	if (chunk->next == 0) {
-	      free_chunk(chunk);
+		free_chunk(chunk);
 	}
 }
 
@@ -181,13 +181,13 @@ void test_heap()
 	void *addr4 = kmalloc(50000);
 	printk("kmalloc 50000 byte in 0x%X\n\n", addr4);
 
-//	printk("free mem in 0x%X\n", addr1);
-//	kfree(addr1);
-//	printk("free mem in 0x%X\n", addr2);
-//	kfree(addr2);
-//	printk("free mem in 0x%X\n", addr3);
-//	kfree(addr3);
-//	printk("free mem in 0x%X\n\n", addr4);
-//	kfree(addr4);
+	printk("free mem in 0x%X\n", addr1);
+	kfree(addr1);
+	printk("free mem in 0x%X\n", addr2);
+	kfree(addr2);
+	printk("free mem in 0x%X\n", addr3);
+	kfree(addr3);
+	printk("free mem in 0x%X\n\n", addr4);
+	kfree(addr4);
 }
 

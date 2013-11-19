@@ -98,7 +98,7 @@ void kern_init()
 	printk("kernel in memory end:   0x%08X\n", kern_end);
 	printk("kernel in memory used:   %d KB\n\n", (kern_end - kern_start) / 1024);
 	
-	show_memory_map();
+	// show_memory_map();
 	init_pmm();
 	init_vmm();
 	init_heap();
