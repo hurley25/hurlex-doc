@@ -150,7 +150,9 @@ void glue_chunk(header_t *chunk)
 	// 如果该内存块后面有链内存块且未被使用则拼合
 	if (chunk->next && chunk->next->allocated == 0) {
 		chunk->length = chunk->length + chunk->next->length;
-		chunk->next->next->prev = chunk;
+		if (chunk->next->next) {
+			chunk->next->next->prev = chunk;
+		}
 		chunk->next = chunk->next->next;
 	}
 
@@ -158,7 +160,9 @@ void glue_chunk(header_t *chunk)
 	if (chunk->prev && chunk->prev->allocated == 0) {
 		chunk->prev->length = chunk->prev->length + chunk->length;
 		chunk->prev->next = chunk->next;
-		//TODO chunk->next->prev = chunk->prev;
+		if (chunk->next) {
+			chunk->next->prev = chunk->prev;
+		}
 		chunk = chunk->prev;
 	}
 
