@@ -24,34 +24,47 @@
 // 任务段描述符结构
 typedef
 struct tss_entry_struct {
-    uint32_t prev_tss;   // 前一个 TSS 段
-    uint32_t esp0;       // 切换到内核模式的时候加载的 esp
-    uint32_t ss0;        // 切换到内核模式的时候加载的 ss
-    uint32_t esp1;
-    uint32_t ss1;
-    uint32_t esp2;  
-    uint32_t ss2;   
-    uint32_t cr3;   
-    uint32_t eip;   
-    uint32_t eflags;
-    uint32_t eax;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t ebx;
-    uint32_t esp;
-    uint32_t ebp;
-    uint32_t esi;
-    uint32_t edi;
-    uint32_t es;         // 切换到内核模式的时候，es - gs 会修改
-    uint32_t cs;
-    uint32_t ss;
-    uint32_t ds;
-    uint32_t fs;
-    uint32_t gs;
-    uint32_t ldt;
-    uint16_t trap;
-    uint16_t iomap_base;
+    uint32_t ts_link;
+    uint32_t ts_esp0;
+    uint16_t ts_ss0;
+    uint16_t ts_padding1;
+    uint32_t ts_esp1;
+    uint16_t ts_ss1;
+    uint16_t ts_padding2;
+    uint32_t ts_esp2;
+    uint16_t ts_ss2;
+    uint16_t ts_padding3;
+    uint32_t ts_cr3;
+    uint32_t ts_eip;
+    uint32_t ts_eflags;
+    uint32_t ts_eax;
+    uint32_t ts_ecx;
+    uint32_t ts_edx;
+    uint32_t ts_ebx;
+    uint32_t ts_esp;
+    uint32_t ts_ebp;
+    uint32_t ts_esi;
+    uint32_t ts_edi;
+    uint16_t ts_es;
+    uint16_t ts_padding4;
+    uint16_t ts_cs;
+    uint16_t ts_padding5;
+    uint16_t ts_ss;
+    uint16_t ts_padding6;
+    uint16_t ts_ds;
+    uint16_t ts_padding7;
+    uint16_t ts_fs;
+    uint16_t ts_padding8;
+    uint16_t ts_gs;
+    uint16_t ts_padding9;
+    uint16_t ts_ldt;
+    uint16_t ts_padding10;
+    uint16_t ts_t;
+    uint16_t ts_iomb;
 } __attribute__((packed)) tss_entry_t;
+
+// 修改内核栈地址
+void load_kern_esp(uint32_t esp0);
 
 // TSS 刷新[汇编实现]
 extern void tss_flush();
