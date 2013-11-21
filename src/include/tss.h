@@ -56,7 +56,4 @@ struct tss_entry_struct {
 // TSS 刷新[汇编实现]
 extern void tss_flush();
 
-// 修改内核栈
-void set_kernel_stack(uint32_t stack);
-
 #endif 	// INCLUDE_TSS_H_

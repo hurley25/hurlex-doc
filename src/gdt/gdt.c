@@ -17,6 +17,9 @@
  */
 
 #include "gdt.h"
+#include "tss.h"
+#include "pmm.h"
+#include "vmm.h"
 #include "string.h"
 
 // 全局描述符表长度
@@ -28,11 +31,17 @@ gdt_entry_t gdt_entries[GDT_LENGTH];
 // GDTR
 gdt_ptr_t gdt_ptr;
 
+// TSS 段定义
+tss_entry_t tss_entry;
+
+// 内核栈声明
+extern char kern_stack[];
+
 // 全局描述符表构造函数，根据下标构造
 static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 
-// 声明内核栈地址
-extern uint32_t stack;
+// TSS 段构造函数
+static void tss_set_gate(int32_t num, uint16_t ss0, uint32_t esp0);
 
 // 初始化全局描述符表
 void init_gdt()
@@ -42,11 +51,13 @@ void init_gdt()
 	gdt_ptr.base = (uint32_t)&gdt_entries;
 
 	// 采用 Intel 平坦模型
-	gdt_set_gate(0, 0, 0, 0, 0);             	// 按照 Intel 文档要求，第一个描述符必须全 0
+	gdt_set_gate(0, 0, 0, 0, 0); 	// 按照 Intel 文档要求，第一个描述符必须全 0
 	gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); 	// 指令段
 	gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); 	// 数据段
 	gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); 	// 用户模式代码段
 	gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); 	// 用户模式数据段
+
+	tss_set_gate(5, 0x10, (uint32_t)kern_stack + STACK_SIZE);
 
 	// 加载全局描述符表地址到 GPTR 寄存器
 	gdt_flush((uint32_t)&gdt_ptr);
@@ -76,5 +87,29 @@ static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t acc
 
 	gdt_entries[num].granularity |= gran & 0xF0;
 	gdt_entries[num].access       = access;
+}
+
+static void tss_set_gate(int32_t num, uint16_t ss0, uint32_t esp0)
+{
+	// 获取 TSS 描述符的位置和长度
+	uint32_t base = (uint32_t)&tss_entry;
+	uint32_t limit = base + sizeof(tss_entry);
+
+	// 现在在 GDT 表中增加我们的 TSS 段描述
+	gdt_set_gate(num, base, limit, 0xE9, 0x00);
+
+	// TSS 段清 0
+	bzero(&tss_entry, sizeof(tss_entry));
+
+	// 设置内核栈的地址
+	tss_entry.ss0  = ss0;
+	tss_entry.esp0 = esp0;
+
+	// 最后设置 cs、ss、ds、es、fs 和 gs 段
+	// 之前的内核代码段选择子是 0x8、数据段选择子是0x10
+	// 但是现在要设置选择子的低位的 RPL 为 11(3) 了
+	// 含义是 TSS 可以从 ring3 切换过来，所以 0x8 和 0x10 变成了 0x0b和 0x13
+	tss_entry.cs = 0x0b;     
+	tss_entry.ss = tss_entry.ds = tss_entry.es = tss_entry.fs = tss_entry.gs = 0x13;
 }
 

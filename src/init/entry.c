@@ -92,7 +92,7 @@ void kern_init()
 	init_timer(200);
 
 	// 开启中断
-	// asm volatile ("sti");
+	//asm volatile ("sti");
 
 	printk("kernel in memory start: 0x%08X\n", kern_start);
 	printk("kernel in memory end:   0x%08X\n", kern_end);
