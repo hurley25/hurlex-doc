@@ -23,9 +23,6 @@
 #include "pmm.h"
 #include "vmm.h"
 
-// 最大进程数
-#define MAX_PROCESS 	1024
-
 // 进程状态描述
 typedef
 enum task_state {
@@ -37,16 +34,12 @@ enum task_state {
 
 // 内核线程的上下文切换保存的信息
 struct context {
-    uint32_t cr3;
-    uint32_t eip;
-    uint32_t esp;
-    uint32_t ebp;
-    uint32_t eax;
-    uint32_t ebx;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t esi;
-    uint32_t edi;
+	uint32_t esp;
+	uint32_t ebp;
+	uint32_t ebx;
+	uint32_t esi;
+	uint32_t edi;
+	uint32_t eflags;
 };
 
 // 进程内存地址结构
@@ -67,20 +60,11 @@ struct task_struct {
 // 全局 pid 值
 extern pid_t now_pid;
 
-// 可调度进程链表
-extern struct task_struct *running_proc_head;
-
-// 等待进程链表
-extern struct task_struct *wait_proc_head;
-
-// 初始化任务调度
-void init_task();
-
 // 内核线程创建
-int32_t kernel_thread(int (*fn)(void *), void *arg, uint32_t *stack);
+int32_t kernel_thread(int (*fn)(void *), void *arg);
 
-// 任务切换
-void switch_to(struct task_struct *next);
+// 线程退出函数
+void kthread_exit();
 
 #endif 	// INCLUDE_TASK_H_
 

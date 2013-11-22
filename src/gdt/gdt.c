@@ -34,9 +34,6 @@ gdt_ptr_t gdt_ptr;
 // TSS 段定义
 tss_entry_t tss_entry;
 
-// 内核栈声明
-extern char kern_stack[];
-
 // 全局描述符表构造函数，根据下标构造
 static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 
@@ -57,7 +54,7 @@ void init_gdt()
 	gdt_set_gate(SEG_UTEXT, 0x0, 0xFFFFFFFF, 0xFA, 0xCF); 	// 用户模式代码段
 	gdt_set_gate(SEG_UDATA, 0x0, 0xFFFFFFFF, 0xF2, 0xCF); 	// 用户模式数据段
 
-	tss_set_gate(SEG_TSS, KERNEL_DS, ((uint32_t)kern_stack + STACK_SIZE) & 0xFFFFFFF0);
+	tss_set_gate(SEG_TSS, KERNEL_DS, kern_stack_top);
 
 	// 加载全局描述符表地址到 GPTR 寄存器
 	gdt_flush((uint32_t)&gdt_ptr);
@@ -104,6 +101,8 @@ static void tss_set_gate(int32_t num, uint16_t ss0, uint32_t esp0)
 	// 设置内核栈的地址
 	tss_entry.ts_ss0  = ss0;
 	tss_entry.ts_esp0 = esp0;
+
+	tss_entry.ts_iomap = 0x40000000;
 	
 	// 现在在 GDT 表中增加 TSS 段描述
 	gdt_set_gate(num, base, limit, 0xE9, 0x00);

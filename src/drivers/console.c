@@ -31,8 +31,8 @@
 static uint16_t *video_memory = (uint16_t *)(0xB8000 + PAGE_OFFSET);
 
 // 屏幕"光标"的坐标
-static uint8_t cursor_x = 0;
-static uint8_t cursor_y = 0;
+static volatile uint8_t cursor_x = 0;
+static volatile uint8_t cursor_y = 0;
 
 // 移动光标
 static void move_cursor()

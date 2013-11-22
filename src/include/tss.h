@@ -59,8 +59,7 @@ struct tss_entry_struct {
     uint16_t ts_padding9;
     uint16_t ts_ldt;
     uint16_t ts_padding10;
-    uint16_t ts_t;
-    uint16_t ts_iomb;
+    uint32_t ts_iomap;
 } __attribute__((packed)) tss_entry_t;
 
 // 修改内核栈地址
