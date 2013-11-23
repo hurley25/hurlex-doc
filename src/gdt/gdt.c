@@ -60,7 +60,7 @@ void init_gdt()
 	gdt_flush((uint32_t)&gdt_ptr);
 
 	// 加载任务寄存器
-	//tss_flush(GD_TSS);
+	//tss_flush();
 }
 
 // 全局描述符表构造函数，根据下标构造
@@ -103,6 +103,16 @@ static void tss_set_gate(int32_t num, uint16_t ss0, uint32_t esp0)
 	tss_entry.ts_esp0 = esp0;
 
 	tss_entry.ts_iomap = 0x40000000;
+
+	// 之前的内核代码段选择子是 0x8 、数据段选择子是 0x10
+	// 但是现在要设置选择子的低位的 RPL 为 11(3) 了
+	// 含义是 TSS 可以从 ring3 切换过来，所以 0x8 和 0x10 变成了 0x0b和 0x13
+	tss_entry.ts_cs = 0x0b;
+	tss_entry.ts_ss = 0x13;
+	tss_entry.ts_ds = 0x13;
+	tss_entry.ts_es = 0x13;
+	tss_entry.ts_fs = 0x13;
+	tss_entry.ts_gs = 0x13;
 	
 	// 现在在 GDT 表中增加 TSS 段描述
 	gdt_set_gate(num, base, limit, 0xE9, 0x00);

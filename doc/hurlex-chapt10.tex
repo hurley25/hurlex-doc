@@ -289,6 +289,36 @@ static uint16_t *video_memory = (uint16_t *)(0xB8000 + PAGE_OFFSET);
 ... ...
 \end{lstlisting}
 
+\par 之前的elf\_t结构体存储的是低端内存的地址，现在也必须加上页偏移：
+
+\begin{lstlisting}[language = C, caption = kern/debug/elf.c]
+... ...
+// 从 multiboot_t 结构获取 ELF 信息
+elf_t elf_from_multiboot(multiboot_t *mb)
+{
+	int i;
+	elf_t elf;
+	elf_section_header_t *sh = (elf_section_header_t *)mb->addr;
+
+	uint32_t shstrtab = sh[mb->shndx].addr;
+	for (i = 0; i < mb->num; i++) {
+		const char *name = (const char *)(shstrtab + sh[i].name) + PAGE_OFFSET;
+		// 在 GRUB 提供的 multiboot 信息中寻找内核 ELF 格式所提取的字符串表和符号表
+		if (strcmp(name, ".strtab") == 0) {
+			elf.strtab = (const char *)sh[i].addr + PAGE_OFFSET;
+			elf.strtabsz = sh[i].size;
+		}
+		if (strcmp(name, ".symtab") == 0) {
+			elf.symtab = (elf_symbol_t *)(sh[i].addr + PAGE_OFFSET);
+			elf.symtabsz = sh[i].size;
+		}
+	}
+
+	return elf;
+}
+... ...
+\end{lstlisting}
+
 \par 最后是实现虚拟内存管理的初始化了，这个函数将建立正式的内核页表并进行切换。同时还有进行地址映射和解除映射的函数实现：
 
 \begin{lstlisting}[language = C, caption = mm/vmm.c]
@@ -535,8 +565,6 @@ void page_fault(pt_regs *regs)
 	if (regs->err_code & 0x10) {
 		printk_color(rc_black, rc_red, "The fault occurred during an instruction fetch.\n");
 	}
-
-	panic("Page Error:");
 
 	while (1);
 }

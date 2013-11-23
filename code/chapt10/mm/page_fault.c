@@ -52,8 +52,6 @@ void page_fault(pt_regs *regs)
 		printk_color(rc_black, rc_red, "The fault occurred during an instruction fetch.\n");
 	}
 
-	panic("Page Error:");
-
 	while (1);
 }
 

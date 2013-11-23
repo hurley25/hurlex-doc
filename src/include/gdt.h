@@ -68,7 +68,7 @@ struct gdt_ptr_t {
 void init_gdt();
 
 // GDT 加载到 GDTR 的函数
-extern void gdt_flush(uint32_t);
+extern void gdt_flush();
 
 // 加载内核栈地址
 void load_kern_esp(uint32_t esp0);
