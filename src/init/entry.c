@@ -127,7 +127,7 @@ void kern_init()
 
 	printk_color(rc_black, rc_red, "\nThe Count of Physical Memory Page is: %u\n\n", phy_page_count);
 
-	//test_heap();
+	test_heap();
 
 	init_sched();
 
