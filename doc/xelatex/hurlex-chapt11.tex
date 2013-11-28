@@ -1,20 +1,58 @@
-/*
- * =====================================================================================
- *
- *       Filename:  heap.c
- *
- *    Description:  内核的简单堆管理
- *
- *        Version:  1.0
- *        Created:  2013年11月18日 14时57分29秒
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  Hurley (LiuHuan), liuhuan1992@gmail.com
- *        Company:  Class 1107 of Computer Science and Technology
- *
- * =====================================================================================
- */
+% -*- coding: UTF-8 -*-
+% hurlex-chapt11.tex
+% hurlex 开发文档 第11章内容
+
+\section {内核堆管理的实现}
+
+\par 前几章实现了内存的简单管理，但是目前的内存分配是按页为单位的，这样在需要分配小内存的时候比较容易造成内部碎片。\allowbreak
+这章我们来实现内核的堆管理算法，目的是为了小内存的分配。除了简单的分配内存之外，还需要考虑在内存释放的时候，对连续\allowbreak
+的内存进行合并。并且堆要实现在空闲内存过多的时候把物理页释放给物理内存管理模块。
+
+\par 关于堆的实现有很多种，我们选择最简单的侵入式链表管理方法。如果你觉得可以胜任更好的算法完全可以自由发挥，而且之前\allowbreak
+的物理内存管理算法完全可以实现为伙伴系统。不过为了照顾大多数读者，我们选择简单的方式实现。当然，通过简单得的算法熟悉了\allowbreak
+物理的机制之后，完全可以抛开这些简单实现，去实现更好的算法。
+
+\par 首先，在每一个申请的内存块之前插入一个描述当前内存块的结构体。结构体定义以及相关的函数声明如下：
+
+\begin{lstlisting}[language = C, caption = include/heap.h]
+#ifndef INCLUDE_HEAP_H_
+#define INCLUDE_HEAP_H_
+
+#include "types.h"
+
+// 堆起始地址
+#define HEAP_START 0xE0000000
+
+// 内存块管理结构
+typedef
+struct header {
+	struct header *prev; 	// 前后内存块管理结构指针
+	struct header *next;
+	uint32_t allocated : 1;	// 该内存块是否已经被申请
+	uint32_t length : 31; 	// 当前内存块的长度
+} header_t;
+
+// 初始化堆
+void init_heap();
+
+// 内存申请
+void *kmalloc(uint32_t len);
+
+// 内存释放
+void kfree(void *p);
+
+// 测试内核堆申请释放
+void test_heap();
+
+#endif 	// INCLUDE_HEAP_H_
+\end{lstlisting}
+
+\par 结构体的定义里使用了C语言的位域定义，因为表示这块内存有没有被使用只需要1个bit就可以，这样节省内存。这里定义的\allowbreak
+堆的函数形式很简单，就不详细解释了。需要注意的是这里定义了虚拟堆起始地址为0xE0000000，它是内核页表没有使用的空闲区域。
+
+\par 接下来是具体实现。除了以上的外部接口函数，还需要在实现文件里声明以下内部函数：
+
+\begin{lstlisting}[language = C, caption = mm/heap.c]
 #include "debug.h"
 #include "pmm.h"
 #include "vmm.h"
@@ -36,6 +74,13 @@ static uint32_t heap_max = HEAP_START;
 
 // 内存块管理头指针
 static header_t *heap_first;
+\end{lstlisting}
+
+\par 这些内部函数只在堆的内部被调用，所以被声明为static，我们之前也强调过，不需要向外部暴露的函数最好用static限制其作用域。\allowbreak
+我们直接贴出相关函数的实现：
+
+\begin{lstlisting}[language = C, caption = mm/heap.c]
+... ...
 
 void init_heap()
 {
@@ -147,7 +192,7 @@ void split_chunk(header_t *chunk, uint32_t len)
 
 void glue_chunk(header_t *chunk)
 {
-	// 如果该内存块后面有链内存块且未被使用则拼合
+	// 如果该内存块前面有链内存块且未被使用则拼合
 	if (chunk->next && chunk->next->allocated == 0) {
 		chunk->length = chunk->length + chunk->next->length;
 		if (chunk->next->next) {
@@ -156,7 +201,6 @@ void glue_chunk(header_t *chunk)
 		chunk->next = chunk->next->next;
 	}
 
-	// 如果该内存块前面有链内存块且未被使用则拼合
 	if (chunk->prev && chunk->prev->allocated == 0) {
 		chunk->prev->length = chunk->prev->length + chunk->length;
 		chunk->prev->next = chunk->next;
@@ -171,7 +215,16 @@ void glue_chunk(header_t *chunk)
 		free_chunk(chunk);
 	}
 }
+... ...
+\end{lstlisting}
 
+\par 这里的代码都很简单，只是链表的简单运用。需要注意的是映射和解除映射并释放的函数。如果理解起来有困难的话，建议你在\allowbreak
+调试模式下在纸上画一画，这样很容易理解。\footnote{这里的代码基本上来自James先生的实现，不过James先生的实现隐藏了比较多\allowbreak
+的BUG，我也是在纸上画过之后才找出的BUG。}
+
+\par 最后添加一个简单的测试函数：
+
+\begin{lstlisting}[language = C, caption = mm/heap.c]
 void test_heap()
 {
 	printk_color(rc_black, rc_magenta, "Test kmalloc() && kfree() now ...\n\n");
@@ -194,4 +247,14 @@ void test_heap()
 	printk("free mem in 0x%X\n\n", addr4);
 	kfree(addr4);
 }
+\end{lstlisting}
 
+\par 最后自然是测试了。在内核的初始化函数里加上堆的相关头文件并且调用初始化和测试函数，输出如下：
+
+\begin{figure}[ht]
+      \centering
+      \includegraphics[scale=0.6]{picture/chapt11/HEAP_TEST.png}
+      \caption{测试内核堆管理函数}
+\end{figure}
+
+\par OK，任务完成！

@@ -28,7 +28,6 @@
 #include "heap.h"
 #include "task.h"
 #include "sched.h"
-#include "spinlock.h"
 
 // 内核初始化函数
 void kern_init();
@@ -87,18 +86,14 @@ __attribute__((section(".init.text"))) void kern_entry()
 	kern_init();
 }
 
-spinlock_t lock;
 int flag = 0;
 
 int thread(void *arg)
 {
-
 	while (1) {
 		if (flag == 1) {
 			printk_color(rc_black, rc_green, "B");
-			spinlock_lock(&lock);
 			flag = 0;
-			spinlock_unlock(&lock);
 		}
 	}
 
@@ -133,17 +128,13 @@ void kern_init()
 
 	kernel_thread(thread, NULL);
 
-	spin_lock_init(&lock);
-	
 	// 开启中断
 	enable_intr();
 
 	while (1) {
 		if (flag == 0) {
 			printk_color(rc_black, rc_red, "A");
-			spinlock_lock(&lock);
 			flag = 1;
-			spinlock_unlock(&lock);
 		}
 	}
 

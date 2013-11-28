@@ -45,7 +45,6 @@
 #define USER_CS     ((GD_UTEXT) | DPL_USER)
 #define USER_DS     ((GD_UDATA) | DPL_USER)
 
-
 // 全局描述符类型
 typedef
 struct gdt_entry_t {

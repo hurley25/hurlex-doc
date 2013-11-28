@@ -66,8 +66,5 @@ int32_t kernel_thread(int (*fn)(void *), void *arg);
 // 线程退出函数
 void kthread_exit();
 
-// 执行退出操作
-void do_exit();
-
 #endif 	// INCLUDE_TASK_H_
 

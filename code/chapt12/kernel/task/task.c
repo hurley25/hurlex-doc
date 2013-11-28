@@ -75,9 +75,3 @@ void kthread_exit()
 	while (1);
 }
 
-// 执行退出操作
-void do_exit()
-{
-
-}
-
