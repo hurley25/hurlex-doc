@@ -20,7 +20,7 @@
     <header>
       <div class="inner">
         <h1>Hurlex-doc</h1>
-        <h2>hurlex 项目的文档</h2>
+        <h2>hurlex 项目的完整开发文档</h2>
         <a href="https://github.com/hurley25/hurlex-doc" class="button"><small>View project on</small>GitHub</a>
       </div>
     </header>
@@ -29,36 +29,56 @@
       <div class="inner clearfix">
         <section id="main-content">
           <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<a name="%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B" class="anchor" href="#%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B"><span class="octicon octicon-link"></span></a>项目简介</h3>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>这里是hurlex这个基于x86架构的内核Demo的详细开发文档，包含PDF文档和生成PDF的XeLaTex源码和文档每章节的阶段代码。你可以按照如下步骤获得整个项目代码。</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<pre><code>$ git clone https://github.com/hurley25/hurlex-doc.git
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>当然，你也可以在右侧点击下载按钮直接下载。</p>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a name="%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%AF%B4%E6%98%8E" class="anchor" href="#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%AF%B4%E6%98%8E"><span class="octicon octicon-link"></span></a>目录结构说明</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>如你所见，只有doc和code两个目录。其中doc目录中是XeLaTex的文档源码还有一个已经编译出来的PDF格式的文档。code目录是分章节的阶段代码，每个代码目录中存放的是文档每个章节结束时的代码现状。</p>
 
 <h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<a name="%E5%85%B7%E4%BD%93%E7%9A%84%E6%96%87%E6%A1%A3%E7%AB%A0%E8%8A%82" class="anchor" href="#%E5%85%B7%E4%BD%93%E7%9A%84%E6%96%87%E6%A1%A3%E7%AB%A0%E8%8A%82"><span class="octicon octicon-link"></span></a>具体的文档章节</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>这里列出具体的文档章节名：</p>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<ol>
+<li>项目概述和开发环境配置<br>
+</li>
+<li>计算机启动过程、GRUB 以及 multiboot 标准<br>
+</li>
+<li>裸机上运行的 Hello OS Kernel<br>
+</li>
+<li>字符模式下的显卡驱动<br>
+</li>
+<li>相关库函数和调试打印函数<br>
+</li>
+<li>添加全局段描述符表<br>
+</li>
+<li>添加中断描述符表<br>
+</li>
+<li>完成中断请求和定时器中断<br>
+</li>
+<li>物理内存管理的实现<br>
+</li>
+<li>虚拟内存管理的实现<br>
+</li>
+<li>内核堆管理的实现<br>
+</li>
+<li>内核线程的创建与切换<br>
+</li>
+<li>接下来如何继续学习<br>
+</li>
+</ol><h3>
+<a name="%E5%8F%91%E5%B8%83%E5%8D%8F%E8%AE%AE" class="anchor" href="#%E5%8F%91%E5%B8%83%E5%8D%8F%E8%AE%AE"><span class="octicon octicon-link"></span></a>发布协议</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>基于GPL V2协议发布项目，部分代码参考自James的实现。</p>
         </section>
 
         <aside id="sidebar">
