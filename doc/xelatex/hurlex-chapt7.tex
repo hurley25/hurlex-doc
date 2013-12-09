@@ -201,7 +201,7 @@ void isr255();
 
 \par 实际上我们把每个中断处理函数拆解为四段，在四个函数里实现。具体的实现如下：
 
-\begin{lstlisting}[language = {[x86masm]Assembler}, caption = gdt/gdt\_s.s]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = idt/idt\_s.s]
 ; 定义两个构造中断处理函数的宏(有的中断有错误代码，有的没有)
 ; 用于没有错误代码的中断
 %macro ISR_NOERRCODE 1
@@ -267,7 +267,7 @@ ISR_NOERRCODE 255
 所以我们在不会压入错误号的中断的处理函数里手动压入0作为占位，这样方便我们在清理的时候不用分类处理。
 
 \par 以上是中断处理函数的最前一部分，接下来是所有中断处理函数共有的保护现场操作：
-\begin{lstlisting}[language = {[x86masm]Assembler}, caption = gdt/gdt\_s.s]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = idt/idt\_s.s]
 [GLOBAL isr_common_stub]
 [EXTERN isr_handler]
 ; 中断服务程序
@@ -301,7 +301,7 @@ isr_common_stub:
 \end{lstlisting}
 
 \par 这里声明了一个外部函数idt\_handler，它的实现如下：
-\begin{lstlisting}[language = C, caption = gdt/gdt.c]
+\begin{lstlisting}[language = C, caption = idt/idt.c]
 // 调用中断处理函数
 void isr_handler(pt_regs *regs)
 {
@@ -318,7 +318,7 @@ void isr_handler(pt_regs *regs)
 中断号码。
 
 \par 最后是中断描述符表的创建和和加载函数：
-\begin{lstlisting}[language = C, caption = gdt/gdt.c]
+\begin{lstlisting}[language = C, caption = idt/idt.c]
 #include "common.h"
 #include "string.h"
 #include "debug.h"
@@ -406,7 +406,7 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 \end{lstlisting}
 
 \par 加载中断描述符表的函数很简单：
-\begin{lstlisting}[language = {[x86masm]Assembler}, caption = gdt/gdt\_s.s]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = idt/idt\_s.s]
 [GLOBAL idt_flush]
 idt_flush:
 	mov eax, [esp+4]  ; 参数存入 eax 寄存器

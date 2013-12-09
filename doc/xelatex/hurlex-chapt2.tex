@@ -35,7 +35,7 @@ Linuxer和喜欢折腾多系统的读者们想必对GRUB并不陌生吧？但是
 此时CPU进行初始化。当电压稳定后，控制芯片会撤销Reset信号，CPU便开始了模式化的工作。此时形成的第一条指令的地址是0xFFFFFFF0\allowbreak
 \footnote{对这个地址有疑问的话，请参考《Intel IA-32 Intel Architecture Software Developer’s Manual Volume 3:System \allowbreak
 Programming Guide Section》的9.1.4 章节。或者参考我博客的一篇文章《基于Intel 80×86CPU的IBM PC及其兼容计算机的启动流程》\allowbreak
-，地址是：http://toqianmo.sinaapp.com/?p=310 P.S. 古老的8086处理器是0xFFFF0这个地址。}\allowbreak
+，地址是：http://www.0xffffff.org/?p=310 P.S. 古老的8086处理器是0xFFFF0这个地址。}\allowbreak
 ，从这里开始，CPU就进入了一个"取指令-翻译指令-执行"的循环了。所以我们需要做的就是在各个阶段提供给CPU相关的数据，\allowbreak
 以完成这个"接力赛"。这个接力过程中任何一个环节如果出现致命问题，其导致的直接后果就是宕机。死机是最好的结果，\allowbreak
 最坏的结果是程序在"默默的"破坏我们的数据，所以一定要谨慎对待。
