@@ -20,7 +20,7 @@
 软件能很好的协助我们的开发和调试工作，而在Windows下缺乏相应的免费工具\allowbreak
 \footnote {当然也可能是我学习和工作的环境多是Linux，所以对Windows下的工具所知甚少。另外为了避免读者频繁看到诸如\allowbreak
 "Windows下如何做，Linux下如何做"的字眼而厌烦，所以就只能牺牲一部分读者的感受了，我在此表示歉意。}
-。虽然我的构建环境使用的是Fedora 18，但是这不影响大家对于Linux发行版的选择，因为使用的命令基本上都是相同的的。\allowbreak
+。虽然我的构建环境使用的是Fedora 18，但是这不影响大家对于Linux发行版的选择，因为使用的命令基本上都是相同的。\allowbreak
 \footnote {差异较大的部分应该是软件安装的包管理器了，这个相信大家应该很熟悉自己所使用的发行版所附带的包管理器了。}
 
 \par 同时，为了避免谈及一些Linux基础的命令和基本的计算机概念，我假定读者们已经对以下列出的知识点有一定的理解和掌握：
@@ -70,7 +70,7 @@
 \par 不过我们这次使用的不是大多数读者熟悉的Vmware或者Virtual Box，而是一款叫做qemu\allowbreak
 的虚拟机。为什么呢？因为有调试的需要。我们需要一个能调试其上运行着的操作系统的虚拟机，而qemu是个不错的选择。\allowbreak
 也许你听过另一款叫做bochs的虚拟机也支持调试，但这次不选择bochs。因为各大Linux发行版软件源里的bochs默认是不带有\allowbreak
-功能的，所以需要重新下载源码编译。而从源里安装的qemu通常直接可以和gdb进行联合调试，所以很省事。而且大家作为一个linuxer，\allowbreak
+调试功能的，所以需要重新下载源码编译。而从源里安装的qemu通常直接可以和gdb进行联合调试，所以很省事。而且大家作为一个linuxer，\allowbreak
 对gdb的使用也不需要我多费唇舌吧？我本着易用简单的理念开始写这篇文档，倘若在环境配置上就让大家感到无所适从的话就不好了。\allowbreak
 如果你熟悉bochs，那自然也可以使用，我会在本章节的末尾给出一个bochs的配置以供有需要的读者参考。
 
@@ -114,7 +114,7 @@ LD = ld
 ASM = nasm
 
 C_FLAGS = -c -Wall -m32 -ggdb -gstabs+ -nostdinc -fno-builtin -fno-stack-protector -I include
-LD_FLAGS = -T tools/kernel.ld -m elf_i386 -nostblib
+LD_FLAGS = -T tools/kernel.ld -m elf_i386 -nostdlib
 ASM_FLAGS = -f elf -g -F stabs
 
 all: $(S_OBJECTS) $(C_OBJECTS) link update_image

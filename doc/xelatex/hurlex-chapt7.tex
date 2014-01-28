@@ -154,7 +154,7 @@ void register_interrupt_handler(uint8_t n, interrupt_handler_t h);
 // 调用中断处理函数
 void isr_handler(pt_regs *regs);
 
-// 声明中断处理函数 0-19 属于 CPU 的异常中断
+// 声明中断处理函数 0 ~ 19 属于 CPU 的异常中断
 // ISR:中断服务程序(interrupt service routine)
 void isr0(); 		// 0 #DE 除 0 异常 
 void isr1(); 		// 1 #DB 调试异常 
@@ -177,7 +177,7 @@ void isr17(); 		// 17 #AC 对齐检查
 void isr18(); 		// 18 #MC 机器检查 
 void isr19(); 		// 19 #XM SIMD(单指令多数据)浮点异常
 
-// 20-31 Intel 保留
+// 20 ~ 31 Intel 保留
 void isr20();
 void isr21();
 void isr22();
@@ -191,7 +191,7 @@ void isr29();
 void isr30();
 void isr31();
 
-// 32～255 用户自定义异常
+// 32 ~ 255 用户自定义异常
 void isr255();
 \end{lstlisting}
 
@@ -244,7 +244,7 @@ ISR_ERRCODE   17 	; 17 #AC 对齐检查
 ISR_NOERRCODE 18 	; 18 #MC 机器检查 
 ISR_NOERRCODE 19 	; 19 #XM SIMD(单指令多数据)浮点异常
 
-; 20~31 Intel 保留
+; 20 ~ 31 Intel 保留
 ISR_NOERRCODE 20
 ISR_NOERRCODE 21
 ISR_NOERRCODE 22
@@ -257,7 +257,7 @@ ISR_NOERRCODE 28
 ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
-; 32～255 用户自定义
+; 32 ～ 255 用户自定义
 ISR_NOERRCODE 255
 \end{lstlisting}
 
@@ -438,7 +438,7 @@ int kern_entry()
 }
 \end{lstlisting}
 
-\par 编译运行，我们得要了正确的结果：\footnote{当然了，我们没有注册具体的处理函数，所以就打印默认的信息了。}
+\par 编译运行，我们得到了正确的结果：\footnote{当然了，我们没有注册具体的处理函数，所以就打印默认的信息了。}
 \begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt7/interrupt_view.png}
