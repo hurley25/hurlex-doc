@@ -113,7 +113,7 @@ void irq15(); 		// IDE1 传输控制使用
 
 \par 然后是idt\_s.s中添加相应的处理过程：
 
-\begin{lstlisting}[language = {[x86masm]Assembler}, caption = gdt/gdt\_s.s]
+\begin{lstlisting}[language = {[x86masm]Assembler}, caption = idt/idt\_s.s]
 ; 构造中断请求的宏
 %macro IRQ 2
 [GLOBAL irq%1]
