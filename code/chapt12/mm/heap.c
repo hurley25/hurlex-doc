@@ -134,7 +134,7 @@ void split_chunk(header_t *chunk, uint32_t len)
 {
 	// 切分内存块之前得保证之后的剩余内存至少容纳一个内存管理块的大小
 	if (chunk->length - len > sizeof (header_t)) {
-		header_t *newchunk = (header_t *)((uint32_t)chunk + chunk->length);
+		header_t *newchunk = (header_t *)((uint32_t)chunk + len);
 		newchunk->prev = chunk;
 		newchunk->next = chunk->next;
 		newchunk->allocated = 0;
