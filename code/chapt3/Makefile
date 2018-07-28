@@ -58,7 +58,7 @@ umount_image:
 
 .PHONY:qemu
 qemu:
-	qemu -fda floppy.img -boot a
+	qemu -fda floppy.img -boot a	#add -nographic when use a server version of linux,such as fedora-server...
 
 .PHONY:bochs
 bochs:
