@@ -88,10 +88,10 @@ struct idt_ptr_t {
 \par 之前我们建立了中断的概念并且介绍了描述符表的结构，接下来我们细化CPU处理中断的\allowbreak
 过程，首先是起始过程，也就是从CPU发现中断事件后，打断当前程序或任务的执行，根据某种机制跳转到中断处理函数去执行的过程：
 \begin{enumerate}
-	\item CPU在执行完当前程序的每一条指令后，都会去确认在执行刚才的指令过程中是否发送中断请求过来，如果有那么CPU\allowbreak
-		就会在相应的时钟脉冲到来时从总线上读取中断请求对应的中断向量。然后根据得到的中断向量为索引到IDT中找到该向量\allowbreak
+	\item CPU在执行完当前程序的每一条指令后，都会去确认在执行刚才的指令过程中是否发送中断请求过来，如果有，那么CPU\allowbreak
+		就会在相应的时钟脉冲到来时从总线上读取中断请求对应的中断向量。然后根据得到的中断向量为索引，到IDT中找到该向量\allowbreak
 		对应的中断描述符，中断描述符里保存着中断处理函数的段选择子；
-	\item CPU使用IDT查到的中断处理函数段选择子从GDT中取得相应的段描述符，段描述符里保存了中断处理函数的段基址和属性信息。\allowbreak
+	\item CPU根据IDT查到的中断处理函数段选择子，从GDT中取得相应的段描述符，段描述符里保存了中断处理函数的段基址和属性信息。\allowbreak
 		此时CPU要进行一个很关键的特权检验的过程，这个涉及到CPL、RPL和DPL的数值检验以及判断是否发生用户态到内核态的切换。\allowbreak
 		如果发生了切换，还要涉及到TSS段和用户栈和内核栈的切换；\footnote{这些东西我们之前都没有说过，所以大家看不懂的话\allowbreak
 		就先跳过去，等到后面讲到保护环的时候我们再细说。}
@@ -114,7 +114,7 @@ struct idt_ptr_t {
       \caption{中断发生时CPU保存的现场}
 \end{figure}
 
-\par CPU在发生中断的时候是按照上问所描述的过程执行的，那操作系统需要做什么呢？
+\par CPU在发生中断的时候是按照上文所描述的过程执行的，那操作系统需要做什么呢？
 
 \par 首先是实现中断处理函数。按照Intel的规定，0～19号中断属于CPU所有\footnote{这些由CPU自身产生的中断也被称之为异常。}，而且\allowbreak
 第20-31号中断也被Intel保留，所以从32～255号才属于用户自定义中断。虽说是"用户自定义"，其实在x86上有些中断按照习惯还是给予了固定\allowbreak
@@ -300,7 +300,7 @@ isr_common_stub:
 .end:
 \end{lstlisting}
 
-\par 这里声明了一个外部函数idt\_handler，它的实现如下：
+\par 这里声明了一个外部函数isr\_handler，它的实现如下：
 \begin{lstlisting}[language = C, caption = idt/idt.c]
 // 调用中断处理函数
 void isr_handler(pt_regs *regs)
@@ -313,11 +313,11 @@ void isr_handler(pt_regs *regs)
 }
 \end{lstlisting}
 
-\par 从上面的代码中我们看到，事实上具体的中断处理函数的原型都是 void (pt\_regs *)，它们被统一组织放置在了全局的函数指针\allowbreak
-数组interrupt\_handers里面。idt\_hanlder函数如判断这个中断函数是否注册，如果注册了会执行该函数，否则打印出Unhandled interrupt和\allowbreak
+\par 从上面的代码中我们看到，事实上具体的中断处理函数的原型都是 void (pt\_regs *)，它们被统一组织放置在全局的函数指针\allowbreak
+数组interrupt\_handers里面。isr\_hanlder函数，如判断这个中断函数是否注册，如果注册了会执行该函数，否则打印出Unhandled interrupt和\allowbreak
 中断号码。
 
-\par 最后是中断描述符表的创建和和加载函数：
+\par 最后是中断描述符表的创建和加载函数：
 \begin{lstlisting}[language = C, caption = idt/idt.c]
 #include "common.h"
 #include "string.h"

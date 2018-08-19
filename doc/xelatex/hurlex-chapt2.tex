@@ -31,7 +31,7 @@ Linuxer和喜欢折腾多系统的读者们想必对GRUB并不陌生吧？但是
 这里的流程是固化的，程序员们能做的很有限。\footnote{当然了，设计BIOS的程序员可以在这里大显身手。}\allowbreak
 我增加这一章只是为了读者们能够充分理解我们之后内容的原理，并没有和编程相关的东西，所以大家只要大致理解就好。
 
-\par 我们从按下电源开始。首先是CPU重置。主板加电之后在电压尚未稳定之前，主板上的北桥控制芯片会向CPU发出重置信号（Reset），\allowbreak
+\par 我们从按下电源开关开始。首先是CPU重置。主板加电之后在电压尚未稳定之前，主板上的北桥控制芯片会向CPU发出重置信号（Reset），\allowbreak
 此时CPU进行初始化。当电压稳定后，控制芯片会撤销Reset信号，CPU便开始了模式化的工作。此时形成的第一条指令的地址是0xFFFFFFF0\allowbreak
 \footnote{对这个地址有疑问的话，请参考《Intel IA-32 Intel Architecture Software Developer’s Manual Volume 3:System \allowbreak
 Programming Guide Section》的9.1.4 章节。或者参考我博客的一篇文章《基于Intel 80×86CPU的IBM PC及其兼容计算机的启动流程》\allowbreak
