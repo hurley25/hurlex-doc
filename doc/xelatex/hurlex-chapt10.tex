@@ -59,7 +59,7 @@ Idx Name          Size      VMA       LMA       File off  Algn
 答案是肯定的，我们就采用这个方案。
 
 \par GCC提供了这样的扩展机制：允许程序员指定某个函数或者某个变量所存储的区段。同时ld的链接脚本又可以自由定制，所以这个\allowbreak
-无解的问题就有了解决方案。用于设置这个临时页表和函数我们指定它存储在.init段，只需要指定该段从0x100000地址开始，\allowbreak
+无解的问题就有了解决方案。用于设置这个临时页表和函数，我们指定它存储在.init段，只需要指定该段从0x100000地址开始，\allowbreak
 其他的.text和.data等段按照0xC0100000作为起始地址即可。当然这里还有要注意的细节，具体在下面的新链接脚本中可以看。\allowbreak
 因为代码变化比较大，所以贴出全部链接器脚本如下：
 
@@ -431,7 +431,7 @@ uint32_t get_mapping(pgd_t *pgd_now, uint32_t va, uint32_t *pa)
 }
 \end{lstlisting}
 
-\par 需要注意的是Intel规定页表和页目录得的起始位置必须是页对齐的，\_\_attribute\_\_ ((aligned(PAGE\_SIZE))) 是GCC的扩展\allowbreak
+\par 需要注意的是Intel规定页表和页目录的起始位置必须是页对齐的，\_\_attribute\_\_ ((aligned(PAGE\_SIZE))) 是GCC的扩展\allowbreak
 指令，功能是使得变量的起始地址按照某个数值对齐，所以我们轻轻松松的就解决了这个难题。
 
 \par 上面代码对应的头文件如下：

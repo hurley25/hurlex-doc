@@ -117,7 +117,7 @@ uint16_t inw(uint16_t port);
 
 \par 细心的读者想必已经发现了函数定义之前的inline关键字了吧？这是GNU对ANSI C的扩展，它和C++语言里的inline的作用是一样的。\allowbreak
 函数前面加上inline之后，编译器会尝试\footnote{没错，是尝试。内联对编译来说只是一个建议，编译器有权利根据实际情况自由处理。}\allowbreak
-在该函数的调用点进行直接进行代码展开，而不是传统的函数调用。这么做的既有传统函数的好处，即避免了重复性的编码，减少了出错的几率。\allowbreak
+在该函数的调用点直接进行代码展开，而不是传统的函数调用。这么做既有传统函数的好处，即避免了重复性的编码，减少了出错的几率。\allowbreak
 又减少了函数的调用，提高了代码的执行效率。另外，你可能见过宏函数这种用法，但是宏函数是没有参数类型的检查的，相比inline还是逊了一筹。
 
 \subsection{颜色的枚举定义和屏幕操作函数的实现}
@@ -264,7 +264,7 @@ static void scroll()
 
 \subsubsection{显示字符串}
 
-\par 那么屏幕显示字符串呢？我们可以先实现屏幕显示一个字符的函数，那么屏幕显示一个字符串不就可以了么。这几个函数的实现如下：
+\par 那么屏幕显示字符串呢？我们可以先实现"屏幕显示一个字符"的函数，那么"屏幕显示一个字符串"不就可以了么？这几个函数的实现如下：
 
 \begin{lstlisting}[language = C, caption = drivers/console.c]
 void console_putc_color(char c, real_color_t back, real_color_t fore)

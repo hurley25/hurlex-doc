@@ -235,7 +235,7 @@ void irq_handler(pt_regs *regs)
 
 \par 写到这里具体的IRQ处理过程就完成了，以后只需要设置好相应的处理函数就好了，接下来我们实现时钟中断的产生和处理。
 
-\par 时钟中断对于操作系统内核来说很重要的一种中断，它使得CPU无论在执行任何用户或者内核的程序时，都能定时的将执行权利\allowbreak
+\par 时钟中断对于操作系统内核来说，是很重要的一种中断，它使得CPU无论在执行任何用户或者内核的程序时，都能定时的将执行权利\allowbreak
 交还到CPU手中来。\footnote{当然了，屏蔽中断就没办法了。}除了记录时间之外，时钟中断的处理函数里通常都是对进程的调度处理。\allowbreak
 
 \par 具体的时钟中断源是8253/8254 Timer 产成的，要按照需要的频率产生中断，需要先配置8253/8254 Timer芯片。代码如下：
@@ -258,7 +258,7 @@ void init_timer(uint32_t frequency)
 	register_interrupt_handler(IRQ0, timer_callback);
 
 	// Intel 8253/8254 PIT芯片 I/O端口地址范围是40h~43h
-	// 输入频率为 1193180，frequency 即每秒中断次数
+	// 输入频率为 1193180/frequency 即每秒中断次数
 	uint32_t divisor = 1193180 / frequency;
 
 	// D7 D6 D5 D4 D3 D2 D1 D0
