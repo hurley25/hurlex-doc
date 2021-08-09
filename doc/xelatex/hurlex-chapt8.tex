@@ -6,24 +6,16 @@
 
 \par 在上一章中我们完成了中断处理程序的框架，本章在其基础上讨论中断请求的实现。
 
-\par 我们在上一章中提到，外设的所有中断由中断控制芯片8259A统一汇集之后连接到CPU的INTR引脚。\footnote{这里肯定会有读者提出来现代\allowbreak
-的计算机主板上早就使用APIC（Advanced Programmable Interrupt Controller，高级可编程中断控制器）来进行外设的中断管理了。\allowbreak
-没错，但是我相信在本科阶段的微机原理和接口技术中学的是8259APIC（Programmable Interrupt Controller），而且无论硬件怎么发展，\allowbreak
-始终会兼容以前的接口。本着大家熟悉易理解的原则，我们依旧使用兼容的8259APIC（Programmable Interrupt Controller， 可编程中断控制器）\allowbreak
-的设置方法进行设置。}这章我们就来探究8259APIC的初始化和实现定时器的中断处理。
+\par 我们在上一章中提到，外设的所有中断由中断控制芯片8259A统一汇集之后连接到CPU的INTR引脚。\footnote{这里肯定会有读者提出来现代的计算机主板上早就使用APIC（Advanced Programmable Interrupt Controller，高级可编程中断控制器）来进行外设的中断管理了。没错，但是我相信在本科阶段的微机原理和接口技术中学的是8259APIC（Programmable Interrupt Controller），而且无论硬件怎么发展，始终会兼容以前的接口。本着大家熟悉易理解的原则，我们依旧使用兼容的8259APIC（Programmable Interrupt Controller， 可编程中断控制器）的设置方法进行设置。}这章我们就来探究8259APIC的初始化和实现定时器的中断处理。
 
-\par 8259A PIC每一片可以管理8个中断源，显然一般情况下设备数量会超过这个值。这里就要提到IBM PC/AT 8259A PIC架构了，IBM的设计方案\allowbreak
-是使用8259APIC的级联功能，使用两片级联（分为主、从片）的方式来管理硬件中断。其中主片的INT端连接到CPU的INTR引脚，从片的INT连接到\allowbreak
-主片的IR2引脚。结构如下图所示：
+\par 8259A PIC每一片可以管理8个中断源，显然一般情况下设备数量会超过这个值。这里就要提到IBM PC/AT 8259A PIC架构了，IBM的设计方案是使用8259APIC的级联功能，使用两片级联（分为主、从片）的方式来管理硬件中断。其中主片的INT端连接到CPU的INTR引脚，从片的INT连接到主片的IR2引脚。结构如下图所示：
 \begin{figure}[ht]
       \centering
       \includegraphics[scale=0.5]{picture/chapt8/8259A_PIC.png}
       \caption{8259A PIC级联}
 \end{figure}
 
-\par 图中时钟中断连接在主片的IRQ0引脚，键盘中断连接在了主片的IRQ1引脚。其它的引脚暂时用不到就不说了。在上一张描述中断描述符表时\allowbreak
-我们知道了0～31号中断是CPU使用和保留的，用户可以使用的中断从32号开始。所以这里的IRQ0对应的中断号就是32号，IRQ1就是33号，然后以此\allowbreak
-类推。
+\par 图中时钟中断连接在主片的IRQ0引脚，键盘中断连接在了主片的IRQ1引脚。其它的引脚暂时用不到就不说了。在上一张描述中断描述符表时我们知道了0～31号中断是CPU使用和保留的，用户可以使用的中断从32号开始。所以这里的IRQ0对应的中断号就是32号，IRQ1就是33号，然后以此类推。
 
 \par 理论就暂时阐述到这里，接下来是实现代码。首先是对8259A PIC的初始化，在设置中断描述符表的函数init\_idt最前面加入如下代码：
 
@@ -235,9 +227,7 @@ void irq_handler(pt_regs *regs)
 
 \par 写到这里具体的IRQ处理过程就完成了，以后只需要设置好相应的处理函数就好了，接下来我们实现时钟中断的产生和处理。
 
-\par 时钟中断对于操作系统内核来说，是很重要的一种中断，它使得CPU无论在执行任何用户或者内核的程序时，都能定时的将执行权利\allowbreak
-交还到CPU手中来。\footnote{当然了，屏蔽中断就没办法了。}除了记录时间之外，时钟中断的处理函数里通常都是对进程的调度处理。\allowbreak
-
+\par 时钟中断对于操作系统内核来说，是很重要的一种中断，它使得CPU无论在执行任何用户或者内核的程序时，都能定时的将执行权利交还到CPU手中来。\footnote{当然了，屏蔽中断就没办法了。}除了记录时间之外，时钟中断的处理函数里通常都是对进程的调度处理。
 \par 具体的时钟中断源是8253/8254 Timer 产成的，要按照需要的频率产生中断，需要先配置8253/8254 Timer芯片。代码如下：
 
 \begin{lstlisting}[language = C, caption = drivers/timer.c]
@@ -290,8 +280,7 @@ void init_timer(uint32_t frequency);
 #endif 	// INCLUDE_TIMER_H_
 \end{lstlisting}
 
-\par 8253/8254 Timer有三种工作模式，我们使用第三种。init\_timer函数的参数是所需的时钟中断的频率，具体的设置原理不再赘述。\allowbreak
-最后，修改入口函数进行测试：
+\par 8253/8254 Timer有三种工作模式，我们使用第三种。init\_timer函数的参数是所需的时钟中断的频率，具体的设置原理不再赘述。最后，修改入口函数进行测试：
 
 \begin{lstlisting}[language = C, caption = init/entry.c]
 #include "console.h"
